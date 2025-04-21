@@ -63,7 +63,7 @@ def generate_podcast_script(pdf_path: str) -> list[dict[str, str]]:
     2.  Create a natural-sounding conversation where Speaker A and Speaker B discuss the main points and key information from the document.
     3.  Alternate between Speaker A and Speaker B. Ensure the conversation flows logically.
     4.  Keep the tone informative yet engaging, suitable for a podcast format.
-    5.  Each part of speaker A and speaker B should be between 100-200 tokens ideally, but prioritize natural conversation over strict length.
+    5.  Each part of speaker A and speaker B should be between 150-200 characters ideally, but prioritize natural conversation over strict length.
     6.  The script should cover the core information from the document but doesn't need to include every single detail. Focus on clarity and conversational flow.
     7.  **Crucially, format the output ONLY as follows:** Each line must start with either "Speaker A:" or "Speaker B:", followed by the dialogue for that speaker. Do not include any introductory text, concluding remarks, titles, or any other text outside of this strict format.
 
@@ -112,43 +112,44 @@ def generate_podcast_script(pdf_path: str) -> list[dict[str, str]]:
         return []
 
 # --- Simple Test ---
-if __name__ == "__main__":
-    # Create a dummy PDF for testing if one doesn't exist
-    test_pdf_path = "test_document_for_gemini.pdf"
-    if not os.path.exists(test_pdf_path):
-        print(f"Creating dummy PDF: {test_pdf_path}...")
-        try:
-            from reportlab.pdfgen import canvas
-            from reportlab.lib.pagesizes import letter
-            c = canvas.Canvas(test_pdf_path, pagesize=letter)
-            c.drawString(100, 750, "The Gemini Test Document.")
-            c.drawString(100, 730, "This document discusses the importance of direct PDF processing.")
-            c.drawString(100, 710, "Gemini 1.5 Pro can handle various file formats, including PDF.")
-            c.showPage()
-            c.drawString(100, 750, "Page 2: Further Considerations.")
-            c.drawString(100, 730, "This simplifies pipelines by removing pre-processing steps.")
-            c.save()
-            print("Dummy PDF created.")
-        except ImportError:
-            print("\nError: 'reportlab' is needed to create a dummy PDF for this test.")
-            print("Please install it ('pip install reportlab') or provide a real PDF.")
-            exit()
-        except Exception as e:
-            print(f"Error creating dummy PDF: {e}")
-            exit()
-    else:
-        print(f"Using existing test PDF: {test_pdf_path}")
-
-    print(f"\nTesting script generation with PDF: {test_pdf_path}...")
-    generated_script = generate_podcast_script(test_pdf_path)
-
-    if generated_script:
-        print("\n--- Generated Script ---")
-        for line in generated_script:
-            print(f"Speaker {line['speaker']}: {line['text']}")
-        print("------------------------\n")
-    else:
-        print("Script generation failed.")
+# Removing the test block as requested
+# if __name__ == "__main__":
+#     # Create a dummy PDF for testing if one doesn't exist
+#     test_pdf_path = "test_document_for_gemini.pdf"
+#     if not os.path.exists(test_pdf_path):
+#         print(f"Creating dummy PDF: {test_pdf_path}...")
+#         try:
+#             from reportlab.pdfgen import canvas
+#             from reportlab.lib.pagesizes import letter
+#             c = canvas.Canvas(test_pdf_path, pagesize=letter)
+#             c.drawString(100, 750, "The Gemini Test Document.")
+#             c.drawString(100, 730, "This document discusses the importance of direct PDF processing.")
+#             c.drawString(100, 710, "Gemini 1.5 Pro can handle various file formats, including PDF.")
+#             c.showPage()
+#             c.drawString(100, 750, "Page 2: Further Considerations.")
+#             c.drawString(100, 730, "This simplifies pipelines by removing pre-processing steps.")
+#             c.save()
+#             print("Dummy PDF created.")
+#         except ImportError:
+#             print("\nError: 'reportlab' is needed to create a dummy PDF for this test.")
+#             print("Please install it ('pip install reportlab') or provide a real PDF.")
+#             exit()
+#         except Exception as e:
+#             print(f"Error creating dummy PDF: {e}")
+#             exit()
+#     else:
+#         print(f"Using existing test PDF: {test_pdf_path}")
+# 
+#     print(f"\nTesting script generation with PDF: {test_pdf_path}...")
+#     generated_script = generate_podcast_script(test_pdf_path)
+# 
+#     if generated_script:
+#         print("\n--- Generated Script ---")
+#         for line in generated_script:
+#             print(f"Speaker {line['speaker']}: {line['text']}")
+#         print("------------------------\n")
+#     else:
+#         print("Script generation failed.")
 
     # Example of how to handle potential safety blocks (though the error handling above is more general)
     # try:
