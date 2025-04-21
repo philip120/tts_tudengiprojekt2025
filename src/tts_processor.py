@@ -22,8 +22,8 @@ DEFAULT_TTS_MODEL_PATH = "model/XTTS-v2" # Changed back from ../model/XTTS-v2
 # --- Hardcoded Paths ---
 # Define paths relative to the project root (parent of src)
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SPEAKER_A_REF_PATH = os.path.join(PROJECT_ROOT, "reference/recording.wav") # Adjust if your default name is different
-SPEAKER_B_REF_PATH = os.path.join(PROJECT_ROOT, "reference/0022.wav") # Adjust if your default name is different
+SPEAKER_A_REF_PATH = os.path.join(PROJECT_ROOT, "reference/philip.wav") # Adjust if your default name is different
+SPEAKER_B_REF_PATH = os.path.join(PROJECT_ROOT, "reference/oskar.wav") # Adjust if your default name is different
 FINAL_OUTPUT_PATH = os.path.join(PROJECT_ROOT, "output/final_podcast.wav") # Adjust if your default name is different
 
 # --- Helper: Sentence Splitter ---
