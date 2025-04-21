@@ -2,11 +2,12 @@
 
 import os
 import torch
-from TTS.tts.models.xtts import Xtts
+from TTS.tts.models.xtts import Xtts, XttsAudioConfig
 from TTS.tts.configs.xtts_config import XttsConfig
+from TTS.config.shared_configs import BaseDatasetConfig
 from TTS.utils.audio import AudioProcessor
-# Need safe_globals if loading older checkpoints or specific configs
-# from torch.serialization import safe_globals 
+# Need safe_globals for loading checkpoints containing non-weight data (like XttsConfig)
+from torch.serialization import safe_globals 
 
 # --- Configuration ---
 # Default model path (can be overridden in constructor)
@@ -82,11 +83,13 @@ class TTSEngine:
         if not self.config:
             raise ValueError("Configuration must be loaded before loading the model.")
 
-        checkpoint_path = os.path.join(self.model_path, "model.pth")
+        # checkpoint_path = os.path.join(self.model_path, "model.pth") # Not explicitly needed if using checkpoint_dir
         vocab_path = os.path.join(self.model_path, "vocab.json")
 
-        if not os.path.exists(checkpoint_path):
-            raise FileNotFoundError(f"Model checkpoint file not found at {checkpoint_path}")
+        # if not os.path.exists(checkpoint_path):
+        #     raise FileNotFoundError(f"Model checkpoint file not found at {checkpoint_path}")
+        if not os.path.exists(self.model_path):
+             raise FileNotFoundError(f"Model directory not found at {self.model_path}")
         if not os.path.exists(vocab_path):
              raise FileNotFoundError(f"Vocabulary file not found at {vocab_path}")
             
@@ -94,14 +97,15 @@ class TTSEngine:
         self.model = Xtts.init_from_config(self.config)
         
         print("Loading model checkpoint...")
-        # Using checkpoint_dir might be more robust if other files are needed
-        self.model.load_checkpoint(
-            config=self.config, # Pass config object
-            checkpoint_dir=self.model_path, # Pass the directory containing model.pth, config.json, vocab.json etc.
-            # checkpoint_path=checkpoint_path, # Explicit path (alternative)
-            vocab_path=vocab_path, # Still often needed even with checkpoint_dir
-            use_deepspeed=False
-        )
+        # Use safe_globals context manager to allow loading specific classes
+        # Add ALL classes mentioned in the PyTorch error messages here
+        with safe_globals([XttsConfig, XttsAudioConfig, BaseDatasetConfig]):
+            self.model.load_checkpoint(
+                config=self.config, 
+                checkpoint_dir=self.model_path, 
+                vocab_path=vocab_path, 
+                use_deepspeed=False
+            )
 
         if self.use_cuda:
             print("Moving model to CUDA...")
@@ -171,47 +175,3 @@ class TTSEngine:
             print(f"An unexpected error occurred during synthesis or saving: {e}")
             # Re-raise or handle as needed
             raise
-
-# --- Simple Test ---
-# Removing the test block as requested
-# if __name__ == "__main__":
-#     print("Running TTSEngine standalone test...")
-#     
-#     # Ensure necessary directories and dummy files exist for the test
-#     test_model_path = DEFAULT_MODEL_PATH # Assumes model exists here
-#     test_ref_wav = "reference/recording2.wav" # Use a real reference
-#     test_output_dir = "output/tts_engine_test/"
-#     test_output_wav = os.path.join(test_output_dir, "test_output.wav")
-# 
-#     os.makedirs(os.path.dirname(test_ref_wav), exist_ok=True)
-#     os.makedirs(test_output_dir, exist_ok=True)
-#     
-#     # Create a dummy reference file if it doesn't exist - REPLACE WITH REAL ONE
-#     if not os.path.exists(test_ref_wav):
-#         print(f"Warning: Test reference WAV not found at {test_ref_wav}. Creating dummy file.")
-#         print("Warning: TTS will likely fail or produce poor results without a real reference.")
-#         # Creating an empty file won't work for actual synthesis
-#         with open(test_ref_wav, 'w') as f: f.write("") 
-# 
-#     try:
-#         print("\nInitializing engine for test...")
-#         # Use default model path, force CPU for predictability in test if desired
-#         # engine = TTSEngine(use_cuda=False) 
-#         engine = TTSEngine() # Use defaults (attempts CUDA if available)
-# 
-#         if engine.model: # Check if initialization was successful
-#             print("\nSynthesizing test sentence...")
-#             engine.synthesize_segment(
-#                 text="Hello, this is a test of the TTS engine class.",
-#                 speaker_wav=test_ref_wav,
-#                 output_path=test_output_wav,
-#                 language="en"
-#             )
-#             print(f"\nTest synthesis complete. Check output: {test_output_wav}")
-#         else:
-#             print("\nEngine initialization failed. Skipping synthesis test.")
-# 
-#     except Exception as e:
-#         print(f"An error occurred during the TTSEngine test: {e}")
-#         import traceback
-#         traceback.print_exc() 

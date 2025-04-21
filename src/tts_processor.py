@@ -4,6 +4,7 @@ import json
 import os
 import sys
 import re # For sentence splitting
+from typing import Union # Import Union for older Python compatibility
 
 # Import the TTS Engine
 from src.tts_engine import TTSEngine 
@@ -88,7 +89,7 @@ def chunk_text(text, max_chars):
 
 
 # --- Main Processing Function ---
-def process_script_for_tts(script_path: str) -> str | None:
+def process_script_for_tts(script_path: str) -> Union[str, None]:
     """
     Loads a JSON script, processes it segment by segment for TTS (handling chunking),
     using hardcoded paths for speaker references.
