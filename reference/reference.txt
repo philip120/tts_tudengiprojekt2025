@@ -1,0 +1,14 @@
+This is a longer audio sample intended for voice cloning using the XTTS model. 
+I will read this text clearly and at a natural pace. The goal is to capture 
+the nuances of my voice, including intonation, pitch variations, and speaking 
+rhythm over a continuous duration. Recording a slightly longer sample like 
+this can sometimes provide the model with more comprehensive data to create 
+a more accurate and natural-sounding cloned voice. I should ensure there is 
+minimal background noise during this recording for the best results. Hopefully, 
+this thirty-second sample will be sufficient for the cloning process.
+
+This is a new reference audio recording for voice cloning. 
+I will speak clearly and steadily for about fifteen seconds.
+ Hopefully, this captures the essential qualities of my
+  voice for the XTTS model to learn from. 
+ The quick brown fox jumps over the lazy dog.
