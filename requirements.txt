@@ -1,0 +1,5 @@
+TTS
+torch
+pydub
+google-generativeai
+# reportlab # Optional: needed for the test block in script_generator.py to create a dummy PDF 
