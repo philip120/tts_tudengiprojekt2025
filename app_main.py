@@ -144,6 +144,7 @@ def combine_audio_segments(
 # --- Background Task Function --- 
 def process_podcast_job(job_id: str, temp_pdf_path: str, original_filename: str):
     """The actual processing logic that runs in the background."""
+    print(f"[Job {job_id}] process_podcast_job function started.") 
     global job_status_db
 
     final_audio_path = None

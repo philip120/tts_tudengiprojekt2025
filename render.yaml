@@ -9,7 +9,7 @@ services:
     # Region can be specified, e.g., frankfurt (Germany) or oregon (US West)
     # region: frankfurt 
     buildCommand: "./build.sh" # Command to build the service
-    startCommand: "gunicorn -w 4 -k uvicorn.workers.UvicornWorker app_main:app" # Command to start the service
+    startCommand: "gunicorn -w 4 -k uvicorn.workers.UvicornWorker --timeout 120 app_main:app" # Command to start the service
     envVars:
       - key: PYTHON_VERSION
         value: "3.10" # Specify the Python version used locally
