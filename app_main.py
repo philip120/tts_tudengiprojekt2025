@@ -71,20 +71,18 @@ app = FastAPI()
 # --- Add CORS Middleware --- 
 origins = [
     # Add the origins allowed to connect.
-    # For local testing with file://, allowing "*" or specific null origin might be needed,
-    # but "*" is simplest for now. For production, replace with your frontend URL.
-    "*" # Allows all origins - BE CAREFUL IN PRODUCTION!
-    # "http://localhost",
-    # "http://localhost:8080", # Example if your frontend runs on a specific port
-    # "null", # Might be needed for file:// origin in some browsers
+    "*", # Keep for broad compatibility during testing, REMOVE for production security
+    "null", # Allow file:// for local testing
+    "http://127.0.0.1:8000", # Allow local development server
+    "https://tts-tudengiprojekt2025.vercel.app/" # <-- ADD YOUR DEPLOYED FRONTEND URL HERE
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=True, # Usually needed for cookies, etc. (though not strictly needed here yet)
-    allow_methods=["GET", "POST"], # Allow GET and POST requests
-    allow_headers=["*"], # Allow all headers
+    allow_credentials=True, 
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
 )
 # -------------------------
 
