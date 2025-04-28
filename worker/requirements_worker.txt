@@ -1,0 +1,29 @@
+# worker/requirements_worker.txt
+
+# API Framework
+Flask==2.2.2
+
+# TTS Dependencies (match versions from your working env if possible)
+TTS==0.22.0
+torch
+torchvision
+torchaudio
+# Add PyTorch index URL as comment if specific CUDA needed during build
+# --index-url https://download.pytorch.org/whl/cu121
+pydub
+
+# Dependencies of TTS/Torch/etc (might be needed explicitly in some envs)
+scipy
+numpy # Ensure version compatible with TTS (e.g., numpy==1.22.0 for TTS 0.22.0)
+
+# Add cloud storage client later if needed (e.g., google-cloud-storage, boto3)
+
+# Note: google-generativeai is NOT needed here, only in the main backend Flask app.
+
+# Add Runpod library
+runpod
+
+# Add any other specific dependencies for your TTS engine if not covered by TTS package
+
+# Add requests library
+requests==2.28.1 
