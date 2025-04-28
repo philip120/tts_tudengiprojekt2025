@@ -6,4 +6,5 @@ google-generativeai
 fastapi
 uvicorn[standard]
 python-multipart
-requests 
+requests
+gunicorn # Added for production server 

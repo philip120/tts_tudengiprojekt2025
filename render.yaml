@@ -1,0 +1,25 @@
+# render.yaml - Configuration for deploying the FastAPI backend on Render
+
+services:
+  # A Web Service for the FastAPI backend
+  - type: web
+    name: xtts-podcast-backend # Choose a service name
+    env: python # Specify the environment
+    plan: free # Specify the Render plan (e.g., free, standard)
+    # Region can be specified, e.g., frankfurt (Germany) or oregon (US West)
+    # region: frankfurt 
+    buildCommand: "./build.sh" # Command to build the service
+    startCommand: "gunicorn -w 4 -k uvicorn.workers.UvicornWorker app_main:app" # Command to start the service
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.10" # Specify the Python version used locally
+      - key: GEMINI_API_KEY
+        sync: false # Do not sync from repo, set in Render dashboard
+      - key: RUNPOD_API_KEY
+        sync: false # Do not sync from repo, set in Render dashboard
+      # Optional: Set Runpod Endpoint ID if different from default
+      # - key: RUNPOD_ENDPOINT_ID
+      #   sync: false
+
+# Note: You will need to set the actual values for GEMINI_API_KEY and RUNPOD_API_KEY
+# in the Environment section of your service settings on the Render dashboard. 

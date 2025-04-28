@@ -3,8 +3,11 @@ import os
 import shutil
 import sys
 import io # Added for Pydub
+import uuid # Added for Job IDs
 from pathlib import Path # Added for easier path handling
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks # Added BackgroundTasks
+from fastapi.responses import FileResponse # Added for sending files
+from fastapi.middleware.cors import CORSMiddleware # <-- Import CORS Middleware
 
 # --- Pydub Import (Requires ffmpeg installed system-wide) ---
 try:
@@ -57,8 +60,33 @@ SPEAKER_MAP = {
 }
 # =====================================================
 
+# --- Job Status Store (In-Memory - Simple Example) ---
+# NOTE: This will be lost if the server restarts. For production, use a database or persistent store.
+job_status_db = {}
+# Example entry: job_id: {"status": "PROCESSING", "message": "Generating script...", "result_path": None, "error": None}
+
 # Create the FastAPI app instance
 app = FastAPI()
+
+# --- Add CORS Middleware --- 
+origins = [
+    # Add the origins allowed to connect.
+    # For local testing with file://, allowing "*" or specific null origin might be needed,
+    # but "*" is simplest for now. For production, replace with your frontend URL.
+    "*" # Allows all origins - BE CAREFUL IN PRODUCTION!
+    # "http://localhost",
+    # "http://localhost:8080", # Example if your frontend runs on a specific port
+    # "null", # Might be needed for file:// origin in some browsers
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True, # Usually needed for cookies, etc. (though not strictly needed here yet)
+    allow_methods=["GET", "POST"], # Allow GET and POST requests
+    allow_headers=["*"], # Allow all headers
+)
+# -------------------------
 
 # --- Ensure directories exist ---
 if not os.path.exists(TEMP_UPLOAD_DIR):
@@ -118,131 +146,187 @@ def combine_audio_segments(
         print("Error: No intro or valid audio segments were loaded to combine.")
         return False
 
-# Simple root endpoint for testing
-@app.get("/")
-def read_root():
-    return {"message": "XTTS Backend is running!"}
+# --- Background Task Function --- 
+def process_podcast_job(job_id: str, temp_pdf_path: str, original_filename: str):
+    """The actual processing logic that runs in the background."""
+    global job_status_db
 
-# --- Modified Endpoint: Upload -> Script -> TTS -> Combine (Sync) ---
-@app.post("/generate-podcast-sync/")
-async def upload_script_tts_combine_sync(file: UploadFile = File(..., description="The PDF file to process")):
-    """Accepts PDF, saves it, generates script, generates audio via Runpod, combines audio, and returns final path."""
-    if not generate_podcast_script or not submit_tts_job or not get_tts_job_result:
-         raise HTTPException(status_code=500, detail="Required processing modules not loaded correctly.")
-    if not AudioSegment:
-        raise HTTPException(status_code=500, detail="Audio processing library (Pydub/ffmpeg) not available.")
-    if not RUNPOD_API_KEY:
-         raise HTTPException(status_code=500, detail="RUNPOD_API_KEY is not configured.")
-
-    if file.content_type != "application/pdf":
-        raise HTTPException(status_code=400, detail="Invalid file type. Only PDFs are accepted.")
-
-    temp_file_path = os.path.join(TEMP_UPLOAD_DIR, file.filename)
-    script_result = []
-    job_ids = []
-    audio_results = []
-    success_count = 0
-    failure_count = 0
-    final_audio_path = None # Initialize final path
+    final_audio_path = None
+    status_message = ""
 
     try:
-        # 1. Save Uploaded File
-        print(f"Saving uploaded file to: {temp_file_path}")
-        with open(temp_file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        print(f"File saved successfully.")
-
-        # 2. Call Script Generator
-        print(f"Calling script generator for: {temp_file_path}")
-        script_result = generate_podcast_script(temp_file_path)
-        print(f"Script generation finished. Got {len(script_result)} segments.")
+        # Update status: Processing Script
+        job_status_db[job_id] = {"status": "PROCESSING", "message": "Generating script...", "result_path": None, "error": None}
+        print(f"[Job {job_id}] Calling script generator for: {temp_pdf_path}")
+        script_result = generate_podcast_script(temp_pdf_path)
+        print(f"[Job {job_id}] Script generation finished. Got {len(script_result)} segments.")
 
         if not script_result:
-             raise HTTPException(status_code=500, detail="Script generation failed or returned empty script.")
+            raise ValueError("Script generation failed or returned empty script.") # Use ValueError for internal logic errors
 
-        # 3. Submit TTS Jobs to Runpod
-        print("\n--- Submitting TTS Jobs ---")
+        total_segments = len(script_result)
+
+        # Update status: Submitting TTS
+        job_status_db[job_id]["message"] = f"Submitting {total_segments} TTS jobs..."
+        print(f"\n[Job {job_id}] --- Submitting TTS Jobs ---")
+        job_ids_tts = []
         for i, segment in enumerate(script_result):
             text = segment.get("text")
             speaker_code = segment.get("speaker")
             speaker_filename = SPEAKER_MAP.get(speaker_code)
 
             if text and speaker_filename:
-                print(f"Submitting segment {i+1}/{len(script_result)} (Speaker: {speaker_code} -> {speaker_filename})...")
-                job_id = submit_tts_job(text=text, speaker_filename=speaker_filename)
-                job_ids.append(job_id) # Store job_id or None if submission failed
+                print(f"[Job {job_id}] Submitting segment {i+1}/{total_segments} (Speaker: {speaker_code} -> {speaker_filename})...")
+                tts_job_id = submit_tts_job(text=text, speaker_filename=speaker_filename)
+                job_ids_tts.append(tts_job_id)
             else:
-                print(f"Warning: Skipping segment {i+1} due to missing text or unknown speaker code '{speaker_code}'.")
-                job_ids.append(None)
+                print(f"[Job {job_id}] Warning: Skipping segment {i+1} due to missing text or unknown speaker code '{speaker_code}'.")
+                job_ids_tts.append(None)
 
-        # 4. Poll for TTS Results (Synchronously for now)
-        print("\n--- Retrieving TTS Results ---")
-        for i, job_id in enumerate(job_ids):
-            if job_id:
-                print(f"Polling result for segment {i+1}/{len(job_ids)} (Job ID: {job_id})...")
-                result_bytes = get_tts_job_result(job_id)
-                audio_results.append(result_bytes) # Appends bytes or None
+        # Update status: Retrieving TTS
+        print(f"\n[Job {job_id}] --- Retrieving TTS Results ---")
+        audio_results = []
+        success_count = 0
+        failure_count = 0
+        for i, tts_job_id in enumerate(job_ids_tts):
+            # Update progress message
+            job_status_db[job_id]["message"] = f"Generating audio segment {i+1}/{total_segments}..."
+            if tts_job_id:
+                print(f"[Job {job_id}] Polling result for segment {i+1}/{total_segments} (Job ID: {tts_job_id})...")
+                result_bytes = get_tts_job_result(tts_job_id)
+                audio_results.append(result_bytes)
                 if result_bytes:
                     success_count += 1
                 else:
                     failure_count += 1
             else:
-                print(f"Skipping result retrieval for segment {i+1} (submission failed or skipped).")
+                print(f"[Job {job_id}] Skipping result retrieval for segment {i+1} (submission failed or skipped).")
                 audio_results.append(None)
-                failure_count += 1 # Count skipped as failure for this step
+                failure_count += 1
 
-        print(f"\n--- TTS Processing Summary ---")
-        print(f"Successfully synthesized: {success_count} segments")
-        print(f"Failed/Skipped:         {failure_count} segments")
+        status_message = f"Synthesized: {success_count} segments, Failed/Skipped: {failure_count} segments."
+        print(f"\n[Job {job_id}] --- TTS Processing Summary ---")
+        print(status_message)
 
         if success_count == 0:
-            raise HTTPException(status_code=500, detail="TTS generation failed for all segments.")
+            raise ValueError("TTS generation failed for all segments.")
 
-        # 5. Combine Audio Segments (Now passing intro path)
-        print("\n--- Combining Audio Segments ---")
-        input_filename_stem = Path(file.filename).stem
+        # Update status: Combining Audio
+        job_status_db[job_id]["message"] = "Combining audio segments..."
+        print(f"\n[Job {job_id}] --- Combining Audio Segments ---")
+        input_filename_stem = Path(original_filename).stem
         output_filename = f"{input_filename_stem}_podcast.wav"
         final_audio_path = os.path.join(FINAL_AUDIO_DIR, output_filename)
 
-        # Pass the INTRO_AUDIO_PATH constant here
         if not combine_audio_segments(audio_results, final_audio_path, intro_audio_path=INTRO_AUDIO_PATH):
-            raise HTTPException(status_code=500, detail=f"Audio combination failed. See server logs. Segments synthesized: {success_count}")
+            raise ValueError(f"Audio combination failed. Segments synthesized: {success_count}")
 
-    except HTTPException: # Re-raise HTTP exceptions
-        # Clean up PDF if needed
-        if os.path.exists(temp_file_path):
-             try: os.remove(temp_file_path) 
-             except: pass # Ignore cleanup errors
-        # Don't delete partially combined audio if combination failed before this point
-        raise
+        # Update status: Completed
+        job_status_db[job_id]["status"] = "COMPLETED"
+        job_status_db[job_id]["message"] = f"Podcast generated successfully! Combined {success_count} segments (intro added)."
+        job_status_db[job_id]["result_path"] = final_audio_path
+        print(f"[Job {job_id}] Processing COMPLETED. Result: {final_audio_path}")
+
     except Exception as e:
-        # Clean up on general failure
-        print(f"Error during processing: {e}")
-        if os.path.exists(temp_file_path):
-            try: os.remove(temp_file_path)
-            except: pass
+        # Update status: Failed
+        error_message = f"Processing failed: {e}"
+        print(f"[Job {job_id}] Error during background processing: {error_message}")
+        job_status_db[job_id]["status"] = "FAILED"
+        job_status_db[job_id]["message"] = status_message # Keep last known status message
+        job_status_db[job_id]["error"] = error_message
         # Attempt to clean up potentially incomplete final audio
         if final_audio_path and os.path.exists(final_audio_path):
             try: os.remove(final_audio_path)
             except: pass
-        raise HTTPException(status_code=500, detail=f"Processing failed: {e}")
-    finally:
-        # Clean up the temporary uploaded PDF file on success or handled failure
-        if os.path.exists(temp_file_path):
-            try:
-                os.remove(temp_file_path)
-                print(f"Cleaned up temporary PDF: {temp_file_path}")
-            except OSError as rm_err:
-                 print(f"Error cleaning up temp PDF {temp_file_path}: {rm_err}")
-        await file.close()
 
-    # Return success with the path to the final audio file
-    return {
-        "message": f"Podcast generated successfully! Combined {success_count} audio segments (intro added).",
-        "final_audio_path": final_audio_path,
-        "succeeded_segments": success_count,
-        "failed_or_skipped_segments": failure_count
-    }
+    finally:
+        # Clean up the temporary uploaded PDF file when done
+        if os.path.exists(temp_pdf_path):
+            try:
+                os.remove(temp_pdf_path)
+                print(f"[Job {job_id}] Cleaned up temporary PDF: {temp_pdf_path}")
+            except OSError as rm_err:
+                 print(f"[Job {job_id}] Error cleaning up temp PDF {temp_pdf_path}: {rm_err}")
+
+# Simple root endpoint for testing
+@app.get("/")
+def read_root():
+    return {"message": "XTTS Backend is running!"}
+
+# --- NEW: Async Endpoint to Start Job ---
+@app.post("/generate-podcast-async/", status_code=202) # Return 202 Accepted
+async def start_podcast_generation(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(..., description="The PDF file to process")
+):
+    """Accepts PDF, starts background processing, returns job ID."""
+    # Basic validation (can add more checks)
+    if file.content_type != "application/pdf":
+        raise HTTPException(status_code=400, detail="Invalid file type. Only PDFs are accepted.")
+    if not generate_podcast_script or not submit_tts_job or not get_tts_job_result or not AudioSegment:
+         raise HTTPException(status_code=500, detail="Required processing modules not loaded correctly.")
+    if not RUNPOD_API_KEY:
+         raise HTTPException(status_code=500, detail="RUNPOD_API_KEY is not configured.")
+
+    job_id = str(uuid.uuid4())
+    print(f"Received new job request: {job_id}")
+
+    # --- Save temporary file with unique name --- 
+    # Include job_id in temp filename to prevent clashes
+    # Use original filename stem for the final output later
+    temp_filename = f"{job_id}_{Path(file.filename).name}"
+    temp_file_path = os.path.join(TEMP_UPLOAD_DIR, temp_filename)
+    
+    try:
+        print(f"[Job {job_id}] Saving uploaded file to: {temp_file_path}")
+        with open(temp_file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        print(f"[Job {job_id}] File saved successfully.")
+    except Exception as e:
+        print(f"[Job {job_id}] Failed to save temporary file: {e}")
+        raise HTTPException(status_code=500, detail=f"Could not save file: {e}")
+    finally:
+        await file.close()
+    # -----------------------------------------------
+
+    # Initialize job status
+    job_status_db[job_id] = {"status": "PENDING", "message": "Job accepted, waiting to start...", "result_path": None, "error": None}
+
+    # Add the long-running task to the background
+    background_tasks.add_task(process_podcast_job, job_id, temp_file_path, file.filename) # Pass original filename too
+    print(f"[Job {job_id}] Task added to background queue.")
+
+    # Return the job ID immediately
+    return {"message": "Podcast generation started.", "job_id": job_id}
+
+# --- NEW: Endpoint to Check Job Status ---
+@app.get("/job-status/{job_id}")
+def get_job_status(job_id: str):
+    """Returns the current status of a background job."""
+    status_info = job_status_db.get(job_id)
+    if not status_info:
+        raise HTTPException(status_code=404, detail="Job ID not found.")
+    return status_info
+
+# --- NEW: Endpoint to Download Result ---
+@app.get("/download-result/{job_id}")
+def download_result(job_id: str):
+    """Downloads the final audio file if the job is complete."""
+    status_info = job_status_db.get(job_id)
+    if not status_info:
+        raise HTTPException(status_code=404, detail="Job ID not found.")
+
+    if status_info["status"] == "COMPLETED" and status_info.get("result_path"):
+        result_path = status_info["result_path"]
+        if os.path.exists(result_path):
+            # Use FileResponse to send the file
+            return FileResponse(path=result_path, filename=Path(result_path).name, media_type='audio/wav')
+        else:
+            raise HTTPException(status_code=404, detail="Result file not found on server.")
+    elif status_info["status"] == "FAILED":
+        raise HTTPException(status_code=400, detail=f"Job failed: {status_info.get('error', 'Unknown error')}")
+    else:
+        raise HTTPException(status_code=400, detail=f"Job is still processing (status: {status_info['status']}).")
 
 # --- Main block to run the server (for development) ---
 # if __name__ == "__main__":
