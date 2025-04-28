@@ -70,11 +70,8 @@ app = FastAPI()
 
 # --- Add CORS Middleware --- 
 origins = [
-    # Add the origins allowed to connect.
-    "*", # Keep for broad compatibility during testing, REMOVE for production security
-    "null", # Allow file:// for local testing
-    "http://127.0.0.1:8000", # Allow local development server
-    "https://tts-tudengiprojekt2025.vercel.app/" # <-- ADD YOUR DEPLOYED FRONTEND URL HERE
+    # Allow ONLY the deployed Vercel frontend
+    "https://tts-tudengiprojekt2025.vercel.app"
 ]
 
 app.add_middleware(
