@@ -5,8 +5,8 @@ import torch, os
 from torch.serialization import safe_globals
 
 BASE_PATH = "model/XTTS-v2"
-REFERENCE_WAV = "reference/recording2.wav"
-OUTPUT_PATH = "output/base_philip.wav"
+REFERENCE_WAV = "wavs/phone2.wav"
+OUTPUT_PATH = "output_test/phone.wav"
 
 # Load config
 config = XttsConfig()
@@ -43,7 +43,7 @@ with safe_globals([XttsConfig]):
 
 # Inference
 output = model.synthesize(
-    text="Hi, my name is Philip, I am a University student in my second year. Here is my laughter: hahahaha",
+    text="Exactly. Our document today dives into that, questioning if anarchism's inherent decentralization prevents it from effectively running larger structures.",
     config=config,
     speaker_wav=[REFERENCE_WAV],
     language="en"
