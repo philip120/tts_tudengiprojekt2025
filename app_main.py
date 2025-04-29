@@ -8,6 +8,8 @@ from pathlib import Path # Added for easier path handling
 from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks # Added BackgroundTasks
 from fastapi.responses import FileResponse # Added for sending files
 from fastapi.middleware.cors import CORSMiddleware # <-- Import CORS Middleware
+import redis # Added for Redis
+import json # Added for Redis data serialization
 
 # --- Pydub Import (Requires ffmpeg installed system-wide) ---
 try:
@@ -60,10 +62,25 @@ SPEAKER_MAP = {
 }
 # =====================================================
 
-# --- Job Status Store (In-Memory - Simple Example) ---
-# NOTE: This will be lost if the server restarts. For production, use a database or persistent store.
-job_status_db = {}
-# Example entry: job_id: {"status": "PROCESSING", "message": "Generating script...", "result_path": None, "error": None}
+# --- Redis Connection --- 
+REDIS_URL = os.environ.get("REDIS_URL")
+redis_client = None
+if REDIS_URL:
+    try:
+        redis_client = redis.from_url(REDIS_URL, decode_responses=True) # decode_responses=True to handle strings
+        redis_client.ping() # Check connection
+        print("Successfully connected to Redis.")
+    except redis.exceptions.ConnectionError as e:
+        print(f"Error connecting to Redis: {e}. Job status will not persist.")
+        redis_client = None # Ensure client is None if connection fails
+else:
+    print("Warning: REDIS_URL environment variable not set. Job status will not persist across workers or restarts.")
+
+# --- Job Status TTL (in seconds) ---
+JOB_STATUS_TTL = 86400 # Keep job status for 1 day
+
+# --- Removed In-Memory Job Store ---
+# job_status_db = {} 
 
 # Create the FastAPI app instance
 app = FastAPI()
@@ -141,29 +158,62 @@ def combine_audio_segments(
         print("Error: No intro or valid audio segments were loaded to combine.")
         return False
 
-# --- Background Task Function --- 
-def process_podcast_job(job_id: str, temp_pdf_path: str, original_filename: str):
-    """The actual processing logic that runs in the background."""
-    print(f"[Job {job_id}] process_podcast_job function started.") 
-    global job_status_db
+# --- Helper Functions for Redis Job Status ---
+def set_job_status(job_id: str, status_data: dict):
+    """Stores job status data in Redis as JSON."""
+    if redis_client:
+        try:
+            # Store the dictionary as a JSON string
+            redis_client.set(job_id, json.dumps(status_data), ex=JOB_STATUS_TTL)
+        except redis.exceptions.RedisError as e:
+            print(f"[Job {job_id}] Redis Error - Failed to set status: {e}")
+    else:
+        print(f"[Job {job_id}] Warning: Redis client not available. Cannot save status.")
 
+def get_job_status_from_redis(job_id: str) -> dict | None:
+    """Retrieves and decodes job status data from Redis."""
+    if redis_client:
+        try:
+            status_json = redis_client.get(job_id)
+            if status_json:
+                return json.loads(status_json) # Decode JSON string back to dict
+            else:
+                return None # Job ID not found in Redis
+        except redis.exceptions.RedisError as e:
+            print(f"[Job {job_id}] Redis Error - Failed to get status: {e}")
+            return None # Treat Redis error as not found for safety
+        except json.JSONDecodeError as e:
+             print(f"[Job {job_id}] Redis Error - Failed to decode status JSON: {e}. Data: {status_json}")
+             return None # Corrupted data
+    else:
+        print(f"Warning: Redis client not available. Cannot get job status.")
+        return None
+
+# --- Background Task Function (Modified for Redis) --- 
+def process_podcast_job(job_id: str, temp_pdf_path: str, original_filename: str):
+    """The actual processing logic that runs in the background, using Redis for status."""
+    print(f"[Job {job_id}] process_podcast_job function started.")
+    # Removed: global job_status_db
     final_audio_path = None
     status_message = ""
+    current_status = {}
 
     try:
         # Update status: Processing Script
-        job_status_db[job_id] = {"status": "PROCESSING", "message": "Generating script...", "result_path": None, "error": None}
+        current_status = {"status": "PROCESSING", "message": "Generating script...", "result_path": None, "error": None}
+        set_job_status(job_id, current_status)
         print(f"[Job {job_id}] Calling script generator for: {temp_pdf_path}")
         script_result = generate_podcast_script(temp_pdf_path)
         print(f"[Job {job_id}] Script generation finished. Got {len(script_result)} segments.")
 
         if not script_result:
-            raise ValueError("Script generation failed or returned empty script.") # Use ValueError for internal logic errors
+            raise ValueError("Script generation failed or returned empty script.")
 
         total_segments = len(script_result)
 
         # Update status: Submitting TTS
-        job_status_db[job_id]["message"] = f"Submitting {total_segments} TTS jobs..."
+        current_status["message"] = f"Submitting {total_segments} TTS jobs..."
+        set_job_status(job_id, current_status)
         print(f"\n[Job {job_id}] --- Submitting TTS Jobs ---")
         job_ids_tts = []
         for i, segment in enumerate(script_result):
@@ -185,8 +235,9 @@ def process_podcast_job(job_id: str, temp_pdf_path: str, original_filename: str)
         success_count = 0
         failure_count = 0
         for i, tts_job_id in enumerate(job_ids_tts):
-            # Update progress message
-            job_status_db[job_id]["message"] = f"Generating audio segment {i+1}/{total_segments}..."
+            # Update progress message in Redis
+            current_status["message"] = f"Generating audio segment {i+1}/{total_segments}..."
+            set_job_status(job_id, current_status)
             if tts_job_id:
                 print(f"[Job {job_id}] Polling result for segment {i+1}/{total_segments} (Job ID: {tts_job_id})...")
                 result_bytes = get_tts_job_result(tts_job_id)
@@ -208,7 +259,8 @@ def process_podcast_job(job_id: str, temp_pdf_path: str, original_filename: str)
             raise ValueError("TTS generation failed for all segments.")
 
         # Update status: Combining Audio
-        job_status_db[job_id]["message"] = "Combining audio segments..."
+        current_status["message"] = "Combining audio segments..."
+        set_job_status(job_id, current_status)
         print(f"\n[Job {job_id}] --- Combining Audio Segments ---")
         input_filename_stem = Path(original_filename).stem
         output_filename = f"{input_filename_stem}_podcast.wav"
@@ -218,18 +270,22 @@ def process_podcast_job(job_id: str, temp_pdf_path: str, original_filename: str)
             raise ValueError(f"Audio combination failed. Segments synthesized: {success_count}")
 
         # Update status: Completed
-        job_status_db[job_id]["status"] = "COMPLETED"
-        job_status_db[job_id]["message"] = f"Podcast generated successfully! Combined {success_count} segments (intro added)."
-        job_status_db[job_id]["result_path"] = final_audio_path
+        current_status["status"] = "COMPLETED"
+        current_status["message"] = f"Podcast generated successfully! Combined {success_count} segments (intro added)."
+        current_status["result_path"] = final_audio_path
+        current_status["error"] = None
+        set_job_status(job_id, current_status)
         print(f"[Job {job_id}] Processing COMPLETED. Result: {final_audio_path}")
 
     except Exception as e:
         # Update status: Failed
         error_message = f"Processing failed: {e}"
         print(f"[Job {job_id}] Error during background processing: {error_message}")
-        job_status_db[job_id]["status"] = "FAILED"
-        job_status_db[job_id]["message"] = status_message # Keep last known status message
-        job_status_db[job_id]["error"] = error_message
+        # Ensure current_status is updated before saving
+        current_status["status"] = "FAILED"
+        current_status["message"] = status_message # Keep last known status message
+        current_status["error"] = error_message
+        set_job_status(job_id, current_status)
         # Attempt to clean up potentially incomplete final audio
         if final_audio_path and os.path.exists(final_audio_path):
             try: os.remove(final_audio_path)
@@ -249,8 +305,8 @@ def process_podcast_job(job_id: str, temp_pdf_path: str, original_filename: str)
 def read_root():
     return {"message": "XTTS Backend is running!"}
 
-# --- NEW: Async Endpoint to Start Job ---
-@app.post("/generate-podcast-async/", status_code=202) # Return 202 Accepted
+# --- NEW: Async Endpoint to Start Job (Modified for Redis) ---
+@app.post("/generate-podcast-async/", status_code=202)
 async def start_podcast_generation(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(..., description="The PDF file to process")
@@ -285,32 +341,43 @@ async def start_podcast_generation(
         await file.close()
     # -----------------------------------------------
 
-    # Initialize job status
-    job_status_db[job_id] = {"status": "PENDING", "message": "Job accepted, waiting to start...", "result_path": None, "error": None}
+    # Initialize job status in Redis
+    initial_status = {"status": "PENDING", "message": "Job accepted, waiting to start...", "result_path": None, "error": None}
+    set_job_status(job_id, initial_status)
 
     # Add the long-running task to the background
-    background_tasks.add_task(process_podcast_job, job_id, temp_file_path, file.filename) # Pass original filename too
+    background_tasks.add_task(process_podcast_job, job_id, temp_file_path, file.filename)
     print(f"[Job {job_id}] Task added to background queue.")
 
     # Return the job ID immediately
     return {"message": "Podcast generation started.", "job_id": job_id}
 
-# --- NEW: Endpoint to Check Job Status ---
+# --- NEW: Endpoint to Check Job Status (Modified for Redis) ---
 @app.get("/job-status/{job_id}")
 def get_job_status(job_id: str):
-    """Returns the current status of a background job."""
-    status_info = job_status_db.get(job_id)
+    """Returns the current status of a background job from Redis."""
+    if not redis_client:
+        raise HTTPException(status_code=503, detail="Job status store (Redis) is unavailable.")
+    
+    status_info = get_job_status_from_redis(job_id)
+    
     if not status_info:
-        raise HTTPException(status_code=404, detail="Job ID not found.")
+        # Check if maybe it just hasn't been written yet vs job never existed?
+        # For simplicity, we treat not found as 404.
+        raise HTTPException(status_code=404, detail="Job ID not found or status expired.")
     return status_info
 
-# --- NEW: Endpoint to Download Result ---
+# --- NEW: Endpoint to Download Result (Modified for Redis) ---
 @app.get("/download-result/{job_id}")
 def download_result(job_id: str):
-    """Downloads the final audio file if the job is complete."""
-    status_info = job_status_db.get(job_id)
+    """Downloads the final audio file if the job is complete, checking Redis status."""
+    if not redis_client:
+        raise HTTPException(status_code=503, detail="Job status store (Redis) is unavailable.")
+
+    status_info = get_job_status_from_redis(job_id)
+    
     if not status_info:
-        raise HTTPException(status_code=404, detail="Job ID not found.")
+        raise HTTPException(status_code=404, detail="Job ID not found or status expired.")
 
     if status_info["status"] == "COMPLETED" and status_info.get("result_path"):
         result_path = status_info["result_path"]

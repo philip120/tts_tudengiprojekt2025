@@ -7,4 +7,5 @@ fastapi
 uvicorn[standard]
 python-multipart
 requests
-gunicorn # Added for production server 
+gunicorn # Added for production server
+redis # Added for shared job status store 
