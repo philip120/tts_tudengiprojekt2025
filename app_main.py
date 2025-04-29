@@ -163,8 +163,10 @@ def set_job_status(job_id: str, status_data: dict):
     """Stores job status data in Redis as JSON."""
     if redis_client:
         try:
-            # Store the dictionary as a JSON string
-            redis_client.set(job_id, json.dumps(status_data), ex=JOB_STATUS_TTL)
+            status_json = json.dumps(status_data)
+            redis_client.set(job_id, status_json, ex=JOB_STATUS_TTL)
+            # Added logging
+            print(f"[Job {job_id}] Redis SET successful. Status: {status_data.get('status')}, Msg: {status_data.get('message')}") 
         except redis.exceptions.RedisError as e:
             print(f"[Job {job_id}] Redis Error - Failed to set status: {e}")
     else:
@@ -176,8 +178,12 @@ def get_job_status_from_redis(job_id: str) -> dict | None:
         try:
             status_json = redis_client.get(job_id)
             if status_json:
+                # Added logging
+                print(f"[Job {job_id}] Redis GET successful. Found status.") 
                 return json.loads(status_json) # Decode JSON string back to dict
             else:
+                # Added logging
+                print(f"[Job {job_id}] Redis GET - Key not found.") 
                 return None # Job ID not found in Redis
         except redis.exceptions.RedisError as e:
             print(f"[Job {job_id}] Redis Error - Failed to get status: {e}")
