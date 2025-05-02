@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+dist/
+*.egg-info/
+.env
+.venv
+env/
+venv/
+output/
+final_audio/
+temp_audio_job/
+temp_uploads/
+.vscode/
