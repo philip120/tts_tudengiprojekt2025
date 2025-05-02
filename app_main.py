@@ -10,15 +10,17 @@ from fastapi.responses import FileResponse # Added for sending files
 from fastapi.middleware.cors import CORSMiddleware # <-- Import CORS Middleware
 import redis # Added for Redis
 import json # Added for Redis data serialization
+import subprocess # Added for ffmpeg command execution
+import tempfile # Added for temporary files
 
-# --- Pydub Import (Requires ffmpeg installed system-wide) ---
-try:
-    from pydub import AudioSegment
-except ImportError:
-    print("Error: Pydub not found. Audio combination will fail.")
-    print("Install it: pip install pydub")
-    print("Ensure ffmpeg is also installed (e.g., sudo apt install ffmpeg or conda install ffmpeg).")
-    AudioSegment = None # Placeholder
+# --- Pydub Import (REMOVED or Commented out if ONLY used for combining) ---
+# try:
+#     from pydub import AudioSegment
+#     # Simple check if it *might* be needed (can be removed if certain)
+#     if 'AudioSegment' not in globals(): AudioSegment = None
+# except ImportError:
+#     print("Warning: Pydub not found or commented out.")
+#     AudioSegment = None
 
 # --- Add src directory to Python path ---
 # This allows importing modules from the src folder
@@ -86,7 +88,11 @@ JOB_STATUS_TTL = 86400 # Keep job status for 1 day
 app = FastAPI()
 
 # --- Add CORS Middleware --- 
-origins = [
+origins = [    # Add localhost for local testing
+    #"http://localhost",
+    #"http://localhost:8000", # Default uvicorn port
+    #"http://127.0.0.1",
+    #"http://127.0.0.1:8000"  # Default uvicorn port
     # Allow ONLY the deployed Vercel frontend
     "https://tts-tudengiprojekt2025.vercel.app"
 ]
@@ -106,57 +112,92 @@ if not os.path.exists(TEMP_UPLOAD_DIR):
 if not os.path.exists(FINAL_AUDIO_DIR):
     os.makedirs(FINAL_AUDIO_DIR)
 
-# --- Helper Function: Combine Audio --- (Modified for Intro)
+# --- Helper Function: Combine Audio --- (USING FFMPEG FILTER)
 def combine_audio_segments(
     audio_bytes_list: list[bytes | None],
     output_path: str,
-    intro_audio_path: str | None = None # Added intro path parameter
+    intro_audio_path: str | None = None
 ) -> bool:
-    """Combines a list of WAV audio bytes into a single WAV file, optionally prepending an intro."""
-    if not AudioSegment:
-        print("Error: Cannot combine audio, Pydub not available.")
+    """Combines a list of WAV audio bytes using the ffmpeg concat filter for robustness."""
+    
+    # Check for ffmpeg
+    try:
+        subprocess.run(["ffmpeg", "-version"], capture_output=True, check=True, text=True)
+    except (FileNotFoundError, subprocess.CalledProcessError):
         return False
 
-    combined = AudioSegment.empty()
+    temp_file_paths = []  # To store paths of temporary wav files created from bytes
+    input_files_for_ffmpeg = []  # To store paths of all files going into ffmpeg (intro + temp)
 
-    # --- Load Intro Audio --- 
+    # Handle intro first (if exists)
     if intro_audio_path:
-        if os.path.exists(intro_audio_path):
-            try:
-                intro = AudioSegment.from_file(intro_audio_path)
-                combined += intro
-                print(f"Successfully loaded and added intro: {intro_audio_path}")
-            except Exception as e:
-                print(f"Warning: Failed to load intro audio from {intro_audio_path}: {e}. Proceeding without intro.")
-        else:
-            print(f"Warning: Intro audio file not found at {intro_audio_path}. Proceeding without intro.")
-    # ---------------------------
+        abs_intro_path = os.path.abspath(intro_audio_path)
+        if os.path.exists(abs_intro_path):
+            input_files_for_ffmpeg.append(abs_intro_path)
 
-    loaded_segment_count = 0
+    # Save bytes to temporary files
+    valid_segment_count = 0
     for i, audio_bytes in enumerate(audio_bytes_list):
         if audio_bytes:
             try:
-                segment = AudioSegment.from_file(io.BytesIO(audio_bytes), format="wav")
-                combined += segment
-                loaded_segment_count += 1
-                print(f"Combined segment {i+1}")
-            except Exception as e:
-                print(f"Error loading audio segment {i+1} with pydub: {e}. Skipping.")
-        else:
-            print(f"Skipping segment {i+1} as it has no audio data.")
+                # Create a temporary file to write the bytes
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_wav:
+                    temp_wav.write(audio_bytes)
+                    temp_file_path = temp_wav.name
+                temp_file_paths.append(temp_file_path)  # Keep track for cleanup
+                input_files_for_ffmpeg.append(temp_file_path)  # Add to ffmpeg input list
+                valid_segment_count += 1
+            except Exception:
+                continue  # Skip any errors silently
 
-    # Only export if we have *something* (either intro or segments)
-    if len(combined) > 0:
-        try:
-            combined.export(output_path, format="wav")
-            print(f"Final combined audio saved to: {output_path}")
-            return True
-        except Exception as e:
-            print(f"Error exporting combined audio to {output_path}: {e}")
-            return False
-    else:
-        print("Error: No intro or valid audio segments were loaded to combine.")
+    if not input_files_for_ffmpeg:
         return False
+
+    # Construct ffmpeg command using concat filter
+    abs_output_path = os.path.abspath(output_path)
+    os.makedirs(os.path.dirname(abs_output_path), exist_ok=True)
+
+    ffmpeg_command = ["ffmpeg", "-y"]  # Start command with overwrite flag
+
+    # Add each input file using -i
+    for file_path in input_files_for_ffmpeg:
+        ffmpeg_command.extend(["-i", file_path])
+
+    # Construct the filter_complex argument
+    filter_complex_str = ""
+    for i in range(len(input_files_for_ffmpeg)):
+        filter_complex_str += f"[{i}:a]"  # Reference each input stream as [0:a], [1:a], etc.
+    filter_complex_str += f"concat=n={len(input_files_for_ffmpeg)}:v=0:a=1[outa]"  # Concatenate audio streams
+
+    ffmpeg_command.extend(["-filter_complex", filter_complex_str])
+    ffmpeg_command.extend(["-map", "[outa]"])  # Map the output of the filter to the output file
+
+    # Add explicit output encoding parameters
+    ffmpeg_command.extend([
+        "-ar", "48000",  # Set output sample rate to 48kHz
+        "-ac", "2",      # Set output audio channels to 2 (stereo)
+        "-acodec", "pcm_s16le",  # Set output codec to standard WAV PCM
+        abs_output_path  # Final output file path
+    ])
+
+    # Execute ffmpeg
+    result = subprocess.run(ffmpeg_command, capture_output=True, text=True, check=False)
+
+    if result.returncode == 0:
+        return True
+    else:
+        if os.path.exists(abs_output_path):
+            try: os.remove(abs_output_path)
+            except OSError: pass
+        return False
+
+    # Clean up temporary files
+    for temp_path in temp_file_paths:
+        if os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except OSError:
+                pass
 
 # --- Helper Functions for Redis Job Status ---
 def set_job_status(job_id: str, status_data: dict):
@@ -195,14 +236,14 @@ def get_job_status_from_redis(job_id: str) -> dict | None:
         print(f"Warning: Redis client not available. Cannot get job status.")
         return None
 
-# --- Background Task Function (Modified for Redis) --- 
+# --- Background Task Function (Modified for Redis) ---
 def process_podcast_job(job_id: str, temp_pdf_path: str, original_filename: str):
     """The actual processing logic that runs in the background, using Redis for status."""
     print(f"[Job {job_id}] process_podcast_job function started.")
     # Removed: global job_status_db
     final_audio_path = None
-    status_message = ""
-    current_status = {}
+    status_message = "" # Initialize status message
+    current_status = {} # Initialize current status
 
     try:
         # Update status: Processing Script
@@ -228,7 +269,7 @@ def process_podcast_job(job_id: str, temp_pdf_path: str, original_filename: str)
             speaker_filename = SPEAKER_MAP.get(speaker_code)
 
             if text and speaker_filename:
-                print(f"[Job {job_id}] Submitting segment {i+1}/{total_segments} (Speaker: {speaker_code} -> {speaker_filename})...")
+                print(f"[Job {job_id}] Submitting segment {i+1}/{total_segments} (Speaker: {speaker_code} -> {speaker_filename})..." )
                 tts_job_id = submit_tts_job(text=text, speaker_filename=speaker_filename)
                 job_ids_tts.append(tts_job_id)
             else:
@@ -245,7 +286,7 @@ def process_podcast_job(job_id: str, temp_pdf_path: str, original_filename: str)
             current_status["message"] = f"Generating audio segment {i+1}/{total_segments}..."
             set_job_status(job_id, current_status)
             if tts_job_id:
-                print(f"[Job {job_id}] Polling result for segment {i+1}/{total_segments} (Job ID: {tts_job_id})...")
+                print(f"[Job {job_id}] Polling result for segment {i+1}/{total_segments} (Job ID: {tts_job_id})..." )
                 result_bytes = get_tts_job_result(tts_job_id)
                 audio_results.append(result_bytes)
                 if result_bytes:
@@ -253,7 +294,7 @@ def process_podcast_job(job_id: str, temp_pdf_path: str, original_filename: str)
                 else:
                     failure_count += 1
             else:
-                print(f"[Job {job_id}] Skipping result retrieval for segment {i+1} (submission failed or skipped).")
+                print(f"[Job {job_id}] Skipping result retrieval for segment {i+1} (submission failed or skipped)." )
                 audio_results.append(None)
                 failure_count += 1
 
@@ -272,10 +313,12 @@ def process_podcast_job(job_id: str, temp_pdf_path: str, original_filename: str)
         output_filename = f"{input_filename_stem}_podcast.wav"
         final_audio_path = os.path.join(FINAL_AUDIO_DIR, output_filename)
 
+        # Call the updated combine_audio_segments (no job_id needed now)
         if not combine_audio_segments(audio_results, final_audio_path, intro_audio_path=INTRO_AUDIO_PATH):
-            raise ValueError(f"Audio combination failed. Segments synthesized: {success_count}")
-
-        # Update status: Completed
+             # Combination failed, raise error
+             raise ValueError(f"Audio combination failed. Segments synthesized: {success_count}")
+        # else: # Combination succeeded
+        # Update status: Completed (Restored original logic)
         current_status["status"] = "COMPLETED"
         current_status["message"] = f"Podcast generated successfully! Combined {success_count} segments (intro added)."
         current_status["result_path"] = final_audio_path
@@ -289,7 +332,8 @@ def process_podcast_job(job_id: str, temp_pdf_path: str, original_filename: str)
         print(f"[Job {job_id}] Error during background processing: {error_message}")
         # Ensure current_status is updated before saving
         current_status["status"] = "FAILED"
-        current_status["message"] = status_message # Keep last known status message
+        # Use the latest status message if available, otherwise the error itself
+        current_status["message"] = status_message if status_message else error_message 
         current_status["error"] = error_message
         set_job_status(job_id, current_status)
         # Attempt to clean up potentially incomplete final audio
@@ -321,10 +365,10 @@ async def start_podcast_generation(
     # Basic validation (can add more checks)
     if file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="Invalid file type. Only PDFs are accepted.")
-    if not generate_podcast_script or not submit_tts_job or not get_tts_job_result or not AudioSegment:
-         raise HTTPException(status_code=500, detail="Required processing modules not loaded correctly.")
+    if not generate_podcast_script or not submit_tts_job or not get_tts_job_result:
+        raise HTTPException(status_code=500, detail="Required processing modules not loaded correctly.")
     if not RUNPOD_API_KEY:
-         raise HTTPException(status_code=500, detail="RUNPOD_API_KEY is not configured.")
+        raise HTTPException(status_code=500, detail="RUNPOD_API_KEY is not configured.")
 
     job_id = str(uuid.uuid4())
     print(f"Received new job request: {job_id}")
