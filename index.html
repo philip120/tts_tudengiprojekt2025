@@ -14,7 +14,7 @@
             margin-top: 1em;
             padding: 1em;
             border: 1px solid #ccc;
-            background-color: #f9f9f9;
+            background-color: #c50808;
             min-height: 2em;
         }
         .error {
@@ -71,8 +71,8 @@
         const downloadArea = document.getElementById('downloadArea');
 
         // Backend API URL (Point to deployed Render service)
-        const API_BASE_URL = 'https://tts-tudengiprojekt2025.onrender.com'; // Updated URL
-
+        //const API_BASE_URL = 'https://tts-tudengiprojekt2025.onrender.com';
+        const API_BASE_URL = 'http://127.0.0.1:8000';
         let currentJobId = null;
         let pollIntervalId = null;
 
