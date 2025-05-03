@@ -46,6 +46,7 @@ except ImportError as e:
 TEMP_UPLOAD_DIR = "temp_uploads"
 FINAL_AUDIO_DIR = "final_audio"
 INTRO_AUDIO_PATH = "output/podcast_intro.wav" # Added path for intro audio
+SILENT_AUDIO_PATH = os.path.join("reference", "silent_voice.wav")
 
 # --- Configuration ---
 # Check if necessary Runpod config is loaded
@@ -236,6 +237,21 @@ def get_job_status_from_redis(job_id: str) -> dict | None:
         print(f"Warning: Redis client not available. Cannot get job status.")
         return None
 
+# --- Helper Function: Save Audio Segments for Debugging ---
+def save_audio_segments(audio_bytes_list: list[bytes | None], debug_dir: str):
+    """Saves each audio segment to a specified debug directory."""
+    os.makedirs(debug_dir, exist_ok=True)  # Ensure the debug directory exists
+
+    for i, audio_bytes in enumerate(audio_bytes_list):
+        if audio_bytes:
+            try:
+                segment_path = os.path.join(debug_dir, f"segment_{i:02d}.wav")
+                with open(segment_path, "wb") as segment_file:
+                    segment_file.write(audio_bytes)
+                print(f"Saved segment {i} to {segment_path}")
+            except Exception as e:
+                print(f"Failed to save segment {i}: {e}")
+
 # --- Background Task Function (Modified for Redis) ---
 def process_podcast_job(job_id: str, temp_pdf_path: str, original_filename: str):
     """The actual processing logic that runs in the background, using Redis for status."""
@@ -305,6 +321,10 @@ def process_podcast_job(job_id: str, temp_pdf_path: str, original_filename: str)
         if success_count == 0:
             raise ValueError("TTS generation failed for all segments.")
 
+        # Save audio segments for debugging
+        debug_dir = os.path.join(FINAL_AUDIO_DIR, f"debug_segments_{job_id}")
+        save_audio_segments(audio_results, debug_dir)
+
         # Update status: Combining Audio
         current_status["message"] = "Combining audio segments..."
         set_job_status(job_id, current_status)
@@ -312,6 +332,11 @@ def process_podcast_job(job_id: str, temp_pdf_path: str, original_filename: str)
         input_filename_stem = Path(original_filename).stem
         output_filename = f"{input_filename_stem}_podcast.wav"
         final_audio_path = os.path.join(FINAL_AUDIO_DIR, output_filename)
+
+        # Add silent audio immediately after the intro
+        if os.path.exists(SILENT_AUDIO_PATH):
+            print(f"Adding silent audio from: {SILENT_AUDIO_PATH}")
+            audio_results.insert(0, open(SILENT_AUDIO_PATH, "rb").read())
 
         # Call the updated combine_audio_segments (no job_id needed now)
         if not combine_audio_segments(audio_results, final_audio_path, intro_audio_path=INTRO_AUDIO_PATH):
@@ -444,4 +469,4 @@ def download_result(job_id: str):
 # --- Main block to run the server (for development) ---
 # if __name__ == "__main__":
 #     print(f"Starting server on http://127.0.0.1:8000")
-#     uvicorn.run("app_main:app", host="127.0.0.1", port=8000, reload=True) 
+#     uvicorn.run("app_main:app", host="127.0.0.1", port=8000, reload=True)
