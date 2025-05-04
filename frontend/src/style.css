@@ -13,6 +13,143 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Updated styles for better separation and consistent grey-white-black theme */
+
+/* Reset some default styles */
+body, h1, h2, h3, p, ul, ol, li, a {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Base styles */
+body {
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+  background-color: #1a1a1a; /* Darker background */
+  color: #e0e0e0; /* Lighter text for contrast */
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Updated styles for header and buttons */
+
+header {
+  background-color: #1f1f1f; /* Darker header background */
+  padding: 30px;
+  text-align: center;
+  border-bottom: 2px solid #333333; /* Subtle border */
+  margin-bottom: 20px;
+}
+
+header h1 {
+  color: #ffffff; /* White text */
+  font-size: 2.8rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+section {
+  background-color: #2a2a2a; /* Dark grey section background */
+  color: #e0e0e0; /* Light text */
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+section h2 {
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+  color: #ffffff; /* White text */
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+section p {
+  font-size: 1rem;
+  margin-bottom: 15px;
+  color: #cccccc; /* Light grey text */
+}
+
+button {
+  background-color: #333333; /* Darker button background */
+  color: #ffffff; /* White text */
+  border: 1px solid #444444; /* Subtle border */
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+button:hover {
+  background-color: #444444; /* Slightly lighter on hover */
+  transform: scale(1.05); /* Subtle zoom effect */
+}
+
+input[type="file"] {
+  background-color: #333333; /* Match button styling */
+  color: #ffffff; /* White text */
+  border: 1px solid #444444; /* Subtle border */
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+input[type="file"]:hover {
+  background-color: #444444; /* Slightly lighter on hover */
+  transform: scale(1.05); /* Subtle zoom effect */
+}
+
+footer {
+  background-color: #1f1f1f; /* Darker footer background */
+  padding: 20px;
+  text-align: center;
+  color: #cccccc; /* Light grey text */
+  margin-top: 20px;
+  border-top: 2px solid #333333; /* Subtle border */
+}
+
+footer p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+a {
+  color: #58a6ff; /* Neon blue links */
+  text-decoration: none;
+}
+
+a:hover {
+  color: #79c0ff; /* Lighter blue on hover */
+}
+
+/* Add subtle animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+body {
+  animation: fadeIn 1s ease-in-out;
+}
+
 a {
   font-weight: 500;
   color: #646cff;

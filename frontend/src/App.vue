@@ -1,20 +1,43 @@
 <template>
   <div id="app">
-    <h1>PDF to Podcast Generator</h1>
+    <header class="superbowl-header">
+      <h1>PDF to Podcast Generator</h1>
+    </header>
 
-    <p>Upload a PDF file to generate a podcast audio file.</p>
+    <main>
+      <section class="upload-section">
+        <h2>Upload Your PDF</h2>
+        <p>Drag and drop your PDF file here or click to upload.</p>
 
-    <FileUploader @file-selected="onFileSelected" />
+        <div class="upload-area" @click="triggerFileInput" @drop.prevent="handleDrop" @dragover.prevent>
+          <p>Click or drag PDF file to this area to upload</p>
+          <input ref="fileInput" type="file" accept="application/pdf" @change="onFileSelected" />
+        </div>
 
-    <br />
+        <p v-if="selectedFile" class="file-name">Selected File: {{ selectedFile.name }}</p>
 
-    <button @click="generatePodcast" :disabled="isProcessing">Generate Podcast</button>
+        <button
+          v-if="selectedFile"
+          @click="generatePodcast"
+          :disabled="isProcessing"
+          class="generate-button"
+        >
+          Generate Podcast
+        </button>
+      </section>
 
-    <h2>Status</h2>
-    <StatusDisplay :message="statusMessage" :statusClass="statusClass" />
+      <section v-if="statusMessage" class="status-section">
+        <h2>Status</h2>
+        <StatusDisplay :message="statusMessage" :statusClass="statusClass" />
+      </section>
 
-    <h2>Result</h2>
-    <DownloadLink :link="downloadLink" />
+      <section v-if="downloadLink" class="result-section">
+        <h2>Result</h2>
+        <DownloadLink :link="downloadLink" />
+      </section>
+    </main>
+
+
   </div>
 </template>
 
@@ -33,16 +56,25 @@ export default {
   data() {
     return {
       selectedFile: null,
-      statusMessage: "Upload a PDF and click 'Generate Podcast' to begin.",
+      statusMessage: "",
       statusClass: "",
       downloadLink: "",
       isProcessing: false,
-      API_BASE_URL: "https://tts-tudengiprojekt2025.onrender.com", // Use local backend for development, Render backend for production
+      API_BASE_URL: "http://127.0.0.1:8000", // Use local backend for development, Render backend for production
     };
   },
   methods: {
-    onFileSelected(file) {
-      this.selectedFile = file;
+    onFileSelected(event) {
+      this.selectedFile = event.target.files[0];
+    },
+    handleDrop(event) {
+      const files = event.dataTransfer.files;
+      if (files.length > 0) {
+        this.selectedFile = files[0];
+      }
+    },
+    triggerFileInput() {
+      this.$refs.fileInput.click();
     },
     async generatePodcast() {
       if (!this.selectedFile) {
@@ -117,9 +149,74 @@ export default {
 </script>
 
 <style>
-body {
-  font-family: sans-serif;
-  padding: 2em;
-  line-height: 1.6;
+@import "./style.css";
+
+.superbowl-header {
+  background: linear-gradient(90deg, #1f1f1f, #333333);
+  padding: 30px;
+  text-align: center;
+  color: #ffffff;
+  font-size: 2.5rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.upload-section {
+  background-color: #2a2a2a;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.upload-area {
+  border: 2px dashed #444444;
+  border-radius: 8px;
+  padding: 20px;
+  color: #cccccc;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.upload-area:hover {
+  background-color: #333333;
+}
+
+.upload-area input {
+  display: none;
+}
+
+.file-name {
+  margin-top: 10px;
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+.generate-button {
+  background-color: #1f6feb;
+  color: #ffffff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.generate-button:hover {
+  background-color: #265dff;
+  transform: scale(1.05);
+}
+
+.superbowl-footer {
+  background: linear-gradient(90deg, #333333, #1f1f1f);
+  padding: 20px;
+  text-align: center;
+  color: #cccccc;
+  font-size: 0.9rem;
 }
 </style>
