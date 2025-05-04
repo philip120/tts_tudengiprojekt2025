@@ -6,6 +6,7 @@ import { resolve } from 'path'
 export default defineConfig({
   plugins: [vue()],
   root: '.',
+  base: './', // Use relative paths for assets
   build: {
     outDir: 'dist', // Output directory for build files
     rollupOptions: {
