@@ -90,20 +90,20 @@ app = FastAPI()
 
 # --- Add CORS Middleware --- 
 origins = [
-    #"http://localhost",
-    #"http://localhost:8000",  # Default uvicorn port
-    #"http://127.0.0.1",
-    #"http://127.0.0.1:8000",  # Default uvicorn port
-    #"http://localhost:5173",  # Vite development server
-    "https://tts-tudengiprojekt2025.vercel.app"  # Deployed frontend
+    "http://localhost",
+    "http://localhost:8000",
+    "http://127.0.0.1",
+    "http://127.0.0.1:8000",
+    "http://localhost:5173",
+    "https://tts-tudengiprojekt2025.vercel.app"  # Allow Vercel frontend
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True, 
-    allow_methods=["GET", "POST"],
-    allow_headers=["*"],
+    allow_origins=origins,  # Allow specified origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers
 )
 # -------------------------
 
