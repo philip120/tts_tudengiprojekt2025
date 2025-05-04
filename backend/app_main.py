@@ -338,8 +338,13 @@ def process_podcast_job(job_id: str, temp_pdf_path: str, original_filename: str)
             print(f"Adding silent audio from: {SILENT_AUDIO_PATH}")
             audio_results.insert(0, open(SILENT_AUDIO_PATH, "rb").read())
 
-        # Call the updated combine_audio_segments (no job_id needed now)
-        if not combine_audio_segments(audio_results, final_audio_path, intro_audio_path=INTRO_AUDIO_PATH):
+        # Ensure the introduction audio is included as the first segment
+        if os.path.exists(INTRO_AUDIO_PATH):
+            print(f"Adding introduction audio: {INTRO_AUDIO_PATH}")
+            audio_results.insert(0, INTRO_AUDIO_PATH)
+
+        # Call the updated combine_audio_segments
+        if not combine_audio_segments(audio_results, final_audio_path):
              # Combination failed, raise error
              raise ValueError(f"Audio combination failed. Segments synthesized: {success_count}")
         # else: # Combination succeeded
