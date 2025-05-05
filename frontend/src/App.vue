@@ -26,6 +26,24 @@
         </button>
       </section>
 
+      <!-- NEW SECTION FOR HOSTS -->
+      <section v-if="isProcessing" class="hosts-section">
+        <h2>Meet Your Hosts</h2>
+        <div class="hosts-container">
+          <div class="host-column">
+            <img :src="host1ImageUrl" alt="Host 1">
+            <p class="host-info">{{ host1Info }}</p>
+            <p>{{ host1Text }}</p>
+          </div>
+          <div class="host-column">
+            <img :src="host2ImageUrl" alt="Host 2">
+            <p class="host-info">{{ host2Info }}</p>
+            <p>{{ host2Text }}</p>
+          </div>
+        </div>
+      </section>
+      <!-- END NEW SECTION -->
+
       <section v-if="statusMessage" class="status-section">
         <h2>Status</h2>
         <StatusDisplay :message="statusMessage" :statusClass="statusClass" />
@@ -61,6 +79,13 @@ export default {
       downloadLink: "",
       isProcessing: false,
       API_BASE_URL: "https://tts-tudengiprojekt2025.onrender.com", // Ensure no trailing slash
+      // Placeholder host data (assuming images are in /public/)
+      host1ImageUrl: "/oskar.png",
+      host1Text: "Oskar is preparing the script...",
+      host1Info: "Meet Oskar, the analytical mind behind the podcast. He focuses on dissecting complex topics from the PDF, ensuring clarity and structure in the generated script.",
+      host2ImageUrl: "/philip.jpeg",
+      host2Text: "Philip is warming up his voice...",
+      host2Info: "And here's Philip, the voice of the podcast. He brings the generated script to life with engaging delivery and clear narration, making complex ideas accessible.",
     };
   },
   methods: {
@@ -87,9 +112,12 @@ export default {
       }
 
       this.updateStatus("Uploading PDF and starting job...");
+      //this.updateStatus("Showing host preview (dummy mode)...");
       this.downloadLink = "";
       this.isProcessing = true;
 
+      // Comment out the actual API call and polling logic for now
+  
       const formData = new FormData();
       formData.append("file", this.selectedFile);
 
@@ -112,6 +140,7 @@ export default {
         this.updateStatus(`Error submitting job: ${error.message}`, "error");
         this.isProcessing = false;
       }
+  
     },
     async pollStatus(jobId) {
       try {
@@ -219,4 +248,56 @@ export default {
   color: #cccccc;
   font-size: 0.9rem;
 }
+
+/* NEW HOST DISPLAY STYLES */
+.hosts-section {
+  background-color: #2a2a2a; /* Match upload section */
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.hosts-section h2 {
+  margin-bottom: 15px;
+  color: #ffffff;
+}
+
+.hosts-container {
+  display: flex;
+  justify-content: space-around; /* Adjust as needed */
+  align-items: flex-start; /* Align items at the top */
+  gap: 20px; /* Space between columns */
+}
+
+.host-column {
+  flex: 1; /* Each column takes equal space */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #cccccc;
+}
+
+.host-column img {
+  width: 100px; /* Adjust size as needed */
+  height: 100px;
+  border-radius: 50%; /* Make images circular */
+  object-fit: cover; /* Ensure image covers the area */
+  margin-bottom: 10px;
+  border: 2px solid #444444;
+}
+
+.host-info {
+  font-size: 0.8rem;
+  font-style: italic;
+  color: #aaaaaa;
+  margin-bottom: 5px;
+}
+
+.host-column p {
+  font-size: 0.9rem;
+}
+/* END NEW HOST DISPLAY STYLES */
+
 </style>
