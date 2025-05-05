@@ -45,8 +45,10 @@ except ImportError as e:
 # --- Constants ---
 TEMP_UPLOAD_DIR = "temp_uploads"
 FINAL_AUDIO_DIR = "final_audio"
-INTRO_AUDIO_PATH = "backend/output/podcast_intro.wav" # Added path for intro audio
-SILENT_AUDIO_PATH = os.path.join("backend/reference", "silent_voice.wav")
+# Define intro path relative to this file's location
+INTRO_AUDIO_PATH = os.path.join(os.path.dirname(__file__), "reference", "podcast_intro.wav") 
+# Define silent path relative to this file's location (assuming it's also in reference)
+SILENT_AUDIO_PATH = os.path.join(os.path.dirname(__file__), "reference", "silent_voice.wav")
 
 # --- Configuration ---
 # Check if necessary Runpod config is loaded
@@ -95,7 +97,6 @@ origins = [
     "http://127.0.0.1",
     "http://127.0.0.1:8000",
     "http://localhost:5173",
-    "http://127.0.0.1:5173",
     "https://tts-tudengiprojekt2025.vercel.app"  # Allow Vercel frontend
 ]
 
