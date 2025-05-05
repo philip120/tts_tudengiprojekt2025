@@ -2,7 +2,7 @@
   <div id="app">
     <!-- Background Video (Always present, controlled by class binding) -->
     <video :class="{ 'video-visible': showHostsSection }" id="background-video" ref="backgroundVideo" loop muted>
-      <source src="/pointilism2.mp4" type="video/mp4">
+      <source src="/pointilism21.mp4" type="video/mp4">
       Your browser does not support the video tag.
     </video>
 
