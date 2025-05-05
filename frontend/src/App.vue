@@ -1,5 +1,11 @@
 <template>
   <div id="app">
+    <!-- Background Video (Always present, controlled by class binding) -->
+    <video :class="{ 'video-visible': showHostsSection }" id="background-video" ref="backgroundVideo" loop muted>
+      <source src="/pointilism2.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+
     <header class="superbowl-header">
       <h1>PDF to Podcast Generator</h1>
     </header>
@@ -27,7 +33,7 @@
       </section>
 
       <!-- NEW SECTION FOR HOSTS -->
-      <section v-if="isProcessing" class="hosts-section">
+      <section v-if="showHostsSection" class="hosts-section">
         <h2>Meet Your Hosts</h2>
         <div class="hosts-container">
           <div class="host-column">
@@ -78,6 +84,7 @@ export default {
       statusClass: "",
       downloadLink: "",
       isProcessing: false,
+      showHostsSection: false,
       API_BASE_URL: "https://tts-tudengiprojekt2025.onrender.com", // Ensure no trailing slash
       // Placeholder host data (assuming images are in /public/)
       host1ImageUrl: "/oskar.png",
@@ -91,15 +98,28 @@ export default {
   methods: {
     onFileSelected(event) {
       this.selectedFile = event.target.files[0];
+      this.resetStatus();
     },
     handleDrop(event) {
       const files = event.dataTransfer.files;
       if (files.length > 0) {
         this.selectedFile = files[0];
+        this.resetStatus();
       }
     },
     triggerFileInput() {
       this.$refs.fileInput.click();
+    },
+    resetStatus() {
+      this.statusMessage = "";
+      this.statusClass = "";
+      this.downloadLink = "";
+      this.isProcessing = false;
+      this.showHostsSection = false;
+      if (this.$refs.backgroundVideo) {
+        this.$refs.backgroundVideo.pause();
+        this.$refs.backgroundVideo.currentTime = 0;
+      }
     },
     async generatePodcast() {
       if (!this.selectedFile) {
@@ -111,10 +131,21 @@ export default {
         return;
       }
 
-      this.updateStatus("Uploading PDF and starting job...");
       //this.updateStatus("Showing host preview (dummy mode)...");
+      this.updateStatus("Generating podcast...");
       this.downloadLink = "";
       this.isProcessing = true;
+      this.showHostsSection = true;
+
+      // Play background video
+      this.$nextTick(() => {
+        if (this.$refs.backgroundVideo) {
+          this.$refs.backgroundVideo.play().catch(error => {
+             // Handle potential play errors (e.g., user interaction needed)
+             console.error("Video play failed:", error);
+          });
+        }
+      });
 
       // Comment out the actual API call and polling logic for now
   
@@ -140,7 +171,7 @@ export default {
         this.updateStatus(`Error submitting job: ${error.message}`, "error");
         this.isProcessing = false;
       }
-  
+
     },
     async pollStatus(jobId) {
       try {
@@ -180,6 +211,36 @@ export default {
 <style>
 @import "./style.css";
 
+/* Styles for Background Video */
+#background-video {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  min-width: 100%;
+  min-height: 100%;
+  width: auto;
+  height: auto;
+  z-index: -100; /* Place it behind everything */
+  object-fit: cover; /* Cover the entire area */
+  opacity: 0; /* Start hidden */
+  transition: opacity 0.5s ease-in-out; /* Add transition */
+  /* Optional: Add a dark overlay for better text contrast */
+  /* filter: brightness(0.5); */ 
+}
+
+/* Class to make the video visible */
+#background-video.video-visible {
+  opacity: 1;
+}
+
+/* Ensure app container allows z-index context and has initial background */
+#app {
+  position: relative; /* Needed for z-index */
+  z-index: 1; /* Keep content above background */
+  background-color: #1a1a1a; /* Initial dark background */
+  min-height: 100vh; /* Ensure it covers viewport height */
+}
+
 .superbowl-header {
   background: linear-gradient(90deg, #1f1f1f, #333333);
   padding: 30px;
@@ -193,11 +254,11 @@ export default {
 }
 
 .upload-section {
-  background-color: #2a2a2a;
+  background-color: rgba(42, 42, 42, 0.8);
   padding: 20px;
   border-radius: 10px;
   margin-bottom: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   text-align: center;
 }
 
@@ -251,11 +312,11 @@ export default {
 
 /* NEW HOST DISPLAY STYLES */
 .hosts-section {
-  background-color: #2a2a2a; /* Match upload section */
+  background-color: rgba(42, 42, 42, 0.8);
   padding: 20px;
   border-radius: 10px;
   margin-bottom: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   text-align: center;
 }
 
