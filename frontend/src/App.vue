@@ -60,7 +60,7 @@ export default {
       statusClass: "",
       downloadLink: "",
       isProcessing: false,
-      API_BASE_URL: "https://tts-tudengiprojekt2025.onrender.com/", // Use local backend for development, Render backend for production
+      API_BASE_URL: "https://tts-tudengiprojekt2025.onrender.com", // Ensure no trailing slash
     };
   },
   methods: {
