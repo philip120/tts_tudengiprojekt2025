@@ -83,7 +83,7 @@ export default {
       host1ImageUrl: "/oskar.png",
       host1Text: "Oskar is preparing the script...",
       host1Info: "Meet Oskar, the analytical mind behind the podcast. He focuses on dissecting complex topics from the PDF, ensuring clarity and structure in the generated script.",
-      host2ImageUrl: "/philip.jpeg",
+      host2ImageUrl: "/philip2.jpg",
       host2Text: "Philip is warming up his voice...",
       host2Info: "And here's Philip, the voice of the podcast. He brings the generated script to life with engaging delivery and clear narration, making complex ideas accessible.",
     };
