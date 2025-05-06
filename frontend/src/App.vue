@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <!-- Background Video (Always present, controlled by class binding) -->
+      <!-- Background Video (Always present, controlled by class binding) -->
     <video :class="{ 'video-visible': showHostsSection }" id="background-video" ref="backgroundVideo" loop muted>
       <source src="/pointilism21.mp4" type="video/mp4">
       Your browser does not support the video tag.
@@ -210,6 +210,7 @@ export default {
 
 <style>
 @import "./style.css";
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
 
 /* Styles for Background Video */
 #background-video {
@@ -239,6 +240,7 @@ export default {
   z-index: 1; /* Keep content above background */
   background-color: #1a1a1a; /* Initial dark background */
   min-height: 100vh; /* Ensure it covers viewport height */
+  font-family: 'Montserrat', sans-serif;
 }
 
 .superbowl-header {
