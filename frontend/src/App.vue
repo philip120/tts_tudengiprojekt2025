@@ -63,6 +63,8 @@
 
 
   </div>
+  <img src="/ut-logo.svg" alt="Logo" id="top-left-logo">
+
 </template>
 
 <script>
@@ -131,11 +133,20 @@ export default {
         return;
       }
 
-      //this.updateStatus("Showing host preview (dummy mode)...");
       this.updateStatus("Generating podcast...");
       this.downloadLink = "";
       this.isProcessing = true;
       this.showHostsSection = true;
+
+      const logo = document.getElementById("top-left-logo");
+      const header = document.querySelector(".superbowl-header");
+      if (logo && header) {
+        header.style.display = "flex";
+        header.style.alignItems = "center";
+        logo.style.position = "relative";
+        logo.style.marginRight = "10px";
+        header.insertBefore(logo, header.firstChild);
+      }
 
       // Play background video
       this.$nextTick(() => {
@@ -148,7 +159,6 @@ export default {
       });
 
       // Comment out the actual API call and polling logic for now
-  
       const formData = new FormData();
       formData.append("file", this.selectedFile);
 
@@ -171,7 +181,6 @@ export default {
         this.updateStatus(`Error submitting job: ${error.message}`, "error");
         this.isProcessing = false;
       }
-
     },
     async pollStatus(jobId) {
       try {
@@ -361,6 +370,17 @@ export default {
 
 .host-column p {
   font-size: 0.9rem;
+}
+
+#top-left-logo {
+    position: fixed; /* Ensures it stays in the top-left corner even when scrolling */
+    top: 0;
+    left: 0;
+    width: 200px; /* Adjusted size for better visibility */
+    height: auto;
+    z-index: 1000; /* Ensures it stays above other elements */
+    margin: 0; /* Removes any default margin */
+    padding: 0; /* Removes any default padding */
 }
 
 </style>
