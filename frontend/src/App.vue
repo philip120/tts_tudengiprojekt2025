@@ -87,7 +87,7 @@ export default {
       showHostsSection: false,
       API_BASE_URL: "https://tts-tudengiprojekt2025.onrender.com", // Ensure no trailing slash
       // Placeholder host data (assuming images are in /public/)
-      host1ImageUrl: "/oskar.png",
+      host1ImageUrl: "/oskar.jpg",
       host1Text: "Oskar is preparing the script...",
       host1Info: "Meet Oskar, the analytical mind behind the podcast. He focuses on dissecting complex topics from the PDF, ensuring clarity and structure in the generated script.",
       host2ImageUrl: "/philip2.jpg",
@@ -342,9 +342,10 @@ export default {
   color: #cccccc;
 }
 
+/* Adjusted size for profile pictures */
 .host-column img {
-  width: 100px; /* Adjust size as needed */
-  height: 100px;
+  width: 150px; /* Increased size */
+  height: 150px;
   border-radius: 50%; /* Make images circular */
   object-fit: cover; /* Ensure image covers the area */
   margin-bottom: 10px;
@@ -361,6 +362,5 @@ export default {
 .host-column p {
   font-size: 0.9rem;
 }
-/* END NEW HOST DISPLAY STYLES */
 
 </style>
