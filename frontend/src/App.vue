@@ -219,7 +219,7 @@ export default {
 
 <style>
 @import "./style.css";
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;700&display=swap');
 
 /* Styles for Background Video */
 #background-video {
