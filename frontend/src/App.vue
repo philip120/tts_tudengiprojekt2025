@@ -97,6 +97,13 @@ export default {
       host2Info: "And here's Philip, the voice of the podcast. He brings the generated script to life with engaging delivery and clear narration, making complex ideas accessible.",
     };
   },
+  mounted() {
+    this.adjustLogoPosition();
+    window.addEventListener('resize', this.adjustLogoPosition);
+  },
+  beforeDestroy() {
+    window.removeEventListener('resize', this.adjustLogoPosition);
+  },
   methods: {
     onFileSelected(event) {
       this.selectedFile = event.target.files[0];
@@ -212,6 +219,21 @@ export default {
     updateStatus(message, type = "") {
       this.statusMessage = message;
       this.statusClass = type;
+    },
+    adjustLogoPosition() {
+      const logo = document.getElementById("top-left-logo");
+      const header = document.querySelector(".superbowl-header");
+      if (this.showHostsSection || window.innerWidth <= 768 && logo && header) {
+        header.style.display = "flex";
+        header.style.alignItems = "center";
+        logo.style.position = "relative";
+        logo.style.marginRight = "10px";
+        header.insertBefore(logo, header.firstChild);
+      } else if (logo && header) {
+        header.style.display = "block";
+        logo.style.position = "fixed";
+        logo.style.marginRight = "0";
+      }
     },
   },
 };
@@ -389,4 +411,39 @@ export default {
     padding: 0; /* Removes any default padding */
 }
 
+@media (max-width: 768px) {
+  .superbowl-header {
+    font-size: 1.5rem;
+    padding: 15px;
+  }
+
+  .upload-section, .hosts-section, .status-section, .result-section {
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+
+  .hosts-container {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .host-column img {
+    width: 100px;
+    height: 100px;
+  }
+
+  .generate-button {
+    font-size: 0.9rem;
+    padding: 10px 20px;
+  }
+
+  #background-video {
+    min-width: 100%;
+    min-height: auto;
+  }
+
+  #top-left-logo {
+    width: 150px;
+  }
+}
 </style>
