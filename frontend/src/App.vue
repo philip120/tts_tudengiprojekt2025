@@ -157,7 +157,7 @@ export default {
           });
         }
       });
-/*/
+
       // Comment out the actual API call and polling logic for now
       const formData = new FormData();
       formData.append("file", this.selectedFile);
@@ -180,7 +180,7 @@ export default {
         console.error("Error submitting job:", error);
         this.updateStatus(`Error submitting job: ${error.message}`, "error");
         this.isProcessing = false;
-      }/*/
+      }
     },
     async pollStatus(jobId) {
       try {
