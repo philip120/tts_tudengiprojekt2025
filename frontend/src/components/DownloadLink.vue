@@ -18,16 +18,25 @@ export default {
 </script>
 
 <style scoped>
-a {
+/* Added specificity to ensure styles are applied to the download link */
+#downloadArea a {
   display: inline-block;
   margin-top: 0.5em;
   padding: 0.5em 1em;
-  background-color: #007bff;
-  color: white;
-  text-decoration: none;
-  border-radius: 4px;
+  background-color: #d3d3d3; 
+  color: #000000; 
+  border: 1px solid #a9a9a9; 
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  outline: none;
+  transition: background-color 0.3s, transform 0.2s;
 }
-a:hover {
-  background-color: #0056b3;
+
+#downloadArea a:hover {
+  background-color: #c0c0c0; 
+  transform: scale(1.05);
 }
 </style>

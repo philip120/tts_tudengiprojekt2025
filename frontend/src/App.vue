@@ -61,9 +61,9 @@
       </section>
     </main>
 
+    <img src="/ut-logo.svg" alt="Logo" id="top-left-logo">
 
   </div>
-  <img src="/ut-logo.svg" alt="Logo" id="top-left-logo">
 
 </template>
 
@@ -157,7 +157,7 @@ export default {
           });
         }
       });
-
+/*/
       // Comment out the actual API call and polling logic for now
       const formData = new FormData();
       formData.append("file", this.selectedFile);
@@ -180,7 +180,7 @@ export default {
         console.error("Error submitting job:", error);
         this.updateStatus(`Error submitting job: ${error.message}`, "error");
         this.isProcessing = false;
-      }
+      }/*/
     },
     async pollStatus(jobId) {
       try {
@@ -262,6 +262,7 @@ export default {
   text-transform: uppercase;
   letter-spacing: 2px;
   text-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
 }
 
 .upload-section {
@@ -296,22 +297,27 @@ export default {
   font-size: 1rem;
 }
 
+/* Updated the generate-button color to light grey */
 .generate-button {
-  background-color: #1f6feb;
-  color: #ffffff;
-  border: none;
+  background-color: #d3d3d3; /* Light grey background */
+  color: #000000; /* Black text for contrast */
+  border: 1px solid #a9a9a9; /* Darker grey border for definition */
   padding: 12px 24px;
   border-radius: 8px;
   cursor: pointer;
   font-size: 1rem;
   font-weight: bold;
+  outline: none;
   transition: background-color 0.3s, transform 0.2s;
 }
 
 .generate-button:hover {
-  background-color: #265dff;
+  background-color: #c0c0c0; /* Slightly darker grey for hover effect */
   transform: scale(1.05);
+  outline: none;
+  box-shadow: none;
 }
+
 
 .superbowl-footer {
   background: linear-gradient(90deg, #333333, #1f1f1f);

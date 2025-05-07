@@ -82,7 +82,7 @@ section p {
 
 button {
   background-color: #333333; /* Darker button background */
-  color: #ffffff; /* White text */
+  color: #000000; /* White text */
   border: 1px solid #444444; /* Subtle border */
   padding: 12px 24px;
   border-radius: 8px;
@@ -128,12 +128,12 @@ footer p {
 }
 
 a {
-  color: #58a6ff; /* Neon blue links */
+  color: #d3d3d3; 
   text-decoration: none;
 }
 
 a:hover {
-  color: #79c0ff; /* Lighter blue on hover */
+  color: #c0c0c0; 
 }
 
 /* Add subtle animations */
@@ -151,12 +151,20 @@ body {
 }
 
 a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+  background-color: #d3d3d3; /* Light grey background */
+  color: #000000; /* Black text for contrast */
+  border: 1px solid #a9a9a9; /* Darker grey border for definition */
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  outline: none;
+  transition: background-color 0.3s, transform 0.2s;
 }
 a:hover {
-  color: #535bf2;
+  background-color: #a9a9a9; 
+
 }
 
 body {
@@ -183,8 +191,9 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
+
 button:hover {
-  border-color: #646cff;
+  border-color: #c0c0c0;
 }
 button:focus,
 button:focus-visible {
@@ -208,7 +217,7 @@ button:focus-visible {
     background-color: #ffffff;
   }
   a:hover {
-    color: #747bff;
+    background-color: #a9a9a9; 
   }
   button {
     background-color: #f9f9f9;
