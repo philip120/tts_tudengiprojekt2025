@@ -53,6 +53,14 @@
       <section v-if="statusMessage" class="status-section">
         <h2>Status</h2>
         <StatusDisplay :message="statusMessage" :statusClass="statusClass" />
+        <div v-if="isProcessing" class="loading-animation">
+          <div class="spinner">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+          </div>
+        </div>
       </section>
 
       <section v-if="downloadLink" class="result-section">
@@ -444,6 +452,55 @@ export default {
 
   #top-left-logo {
     width: 150px;
+  }
+}
+
+.loading-animation {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.spinner {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.spinner div {
+  display: inline-block;
+  position: absolute;
+  left: 8px;
+  width: 16px;
+  background: #fff;
+  animation: spinner-animation 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+.spinner div:nth-child(1) {
+  left: 8px;
+  animation-delay: -0.24s;
+}
+
+.spinner div:nth-child(2) {
+  left: 32px;
+  animation-delay: -0.12s;
+}
+
+.spinner div:nth-child(3) {
+  left: 56px;
+  animation-delay: 0;
+}
+
+@keyframes spinner-animation {
+  0% {
+    top: 8px;
+    height: 64px;
+  }
+  50%, 100% {
+    top: 24px;
+    height: 32px;
   }
 }
 </style>
