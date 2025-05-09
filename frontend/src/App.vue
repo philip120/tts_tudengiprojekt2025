@@ -1,5 +1,21 @@
 <template>
   <div id="app">
+    <button
+      id="info-button"
+      @click="toggleInfoBox"
+    >
+      <img src="/info.png" alt="Info" class="info-icon" />
+    </button>
+
+    <div v-if="showInfoBox" id="info-box-overlay">
+      <div id="info-box">
+        <h2>About This Project</h2>
+        <p>This project was developed by Philip Paškov and Oskar Männik for the University of Tartu Student Project Contest 2025. Its primary goal is to offer students a new way of learning by allowing them to upload their lecture slides (PDF format) and convert them into podcasts for a more enjoyable studying process.</p>
+        <p>The system operates in two main stages: first, a textual script is generated from the slides using Gemini. Then, leveraging the XTTS-v2 model, we apply voice cloning to produce a podcast narrated in our own voices.</p>
+        <button @click="toggleInfoBox">Close</button>
+      </div>
+    </div>
+
       <!-- Background Video (Always present, controlled by class binding) -->
     <video :class="{ 'video-visible': showHostsSection }" id="background-video" ref="backgroundVideo" loop muted>
       <source src="/pointilism21.mp4" type="video/mp4">
@@ -103,6 +119,7 @@ export default {
       host2ImageUrl: "/philip2.jpg",
       host2Text: "Philip is warming up his voice...",
       host2Info: "And here's Philip, the voice of the podcast. He brings the generated script to life with engaging delivery and clear narration, making complex ideas accessible.",
+      showInfoBox: false,
     };
   },
   mounted() {
@@ -153,15 +170,8 @@ export default {
       this.isProcessing = true;
       this.showHostsSection = true;
 
-      const logo = document.getElementById("top-left-logo");
-      const header = document.querySelector(".superbowl-header");
-      if (logo && header) {
-        header.style.display = "flex";
-        header.style.alignItems = "center";
-        logo.style.position = "relative";
-        logo.style.marginRight = "10px";
-        header.insertBefore(logo, header.firstChild);
-      }
+      // Call adjustLogoPosition when the button is pressed
+      this.adjustLogoPosition();
 
       // Play background video
       this.$nextTick(() => {
@@ -231,17 +241,30 @@ export default {
     adjustLogoPosition() {
       const logo = document.getElementById("top-left-logo");
       const header = document.querySelector(".superbowl-header");
-      if (this.showHostsSection || window.innerWidth <= 768 && logo && header) {
+
+      if (window.innerWidth <= 768 && logo && header) {
+        // Mobile view: Move logo above the headline
+        header.style.display = "block";
+        header.style.alignItems = "center";
+        logo.style.position = "relative";
+        logo.style.margin = "0 auto 10px auto";
+        header.insertBefore(logo, header.firstChild);
+      } else if (this.showHostsSection && logo && header) {
+        // Desktop view with hosts section: Move logo to the left of the headline
         header.style.display = "flex";
         header.style.alignItems = "center";
         logo.style.position = "relative";
         logo.style.marginRight = "10px";
         header.insertBefore(logo, header.firstChild);
       } else if (logo && header) {
+        // Default desktop view: Keep logo fixed in the top-left corner
         header.style.display = "block";
         logo.style.position = "fixed";
-        logo.style.marginRight = "0";
+        logo.style.margin = "0";
       }
+    },
+    toggleInfoBox() {
+      this.showInfoBox = !this.showInfoBox;
     },
   },
 };
@@ -283,9 +306,9 @@ export default {
 }
 
 .superbowl-header {
-  background: linear-gradient(90deg, #1f1f1f, #333333);
-  padding: 30px;
   text-align: center;
+  padding: 30px;
+  background: linear-gradient(90deg, #1f1f1f, #333333);
   color: #ffffff;
   font-size: 2.5rem;
   font-weight: bold;
@@ -293,6 +316,19 @@ export default {
   letter-spacing: 2px;
   text-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   border-radius: 10px;
+}
+.superbowl-header h1 {
+  margin: 0 auto;
+}
+@media (max-width: 768px) {
+  .superbowl-header {
+    display: block;
+    text-align: center;
+    padding: 15px;
+  }
+  .superbowl-header h1 {
+    margin: 0 auto;
+  }
 }
 
 .upload-section {
@@ -417,6 +453,7 @@ export default {
     z-index: 1000; /* Ensures it stays above other elements */
     margin: 0; /* Removes any default margin */
     padding: 0; /* Removes any default padding */
+    margin-right: 6px; /* Decreased space between logo and h1 when sideways */
 }
 
 @media (max-width: 768px) {
@@ -452,6 +489,7 @@ export default {
 
   #top-left-logo {
     width: 150px;
+    margin: 0 auto 10px auto; /* Keep margin for stacked (mobile) view */
   }
 }
 
@@ -501,6 +539,113 @@ export default {
   50%, 100% {
     top: 24px;
     height: 32px;
+  }
+}
+
+#info-button {
+  position: fixed;
+  top: 20px; /* Keep it further down */
+  right: 10px; /* Ensure consistent distance from the right side */
+  background-color: #d3d3d3;
+  color: #000000;
+  border: 1px solid #a9a9a9;
+  border-radius: 50%; /* Make it circular */
+  width: 70px; /* Increase size for a bigger button */
+  height: 70px; /* Match width for a perfect circle */
+  font-size: 1.5rem; /* Increase font size for better visibility */
+  cursor: pointer;
+  z-index: 1100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 10px; /* Add consistent margin */
+  transition: background-color 0.3s, transform 0.2s;
+  outline: none;
+}
+
+#info-button:hover {
+  background-color: #c0c0c0; /* Slightly darker grey for hover effect */
+  transform: scale(1.05);
+  outline: none;
+  box-shadow: none;
+}
+
+.info-icon {
+  width: 30px;
+  height: 30px;
+}
+
+#info-box-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1100;
+}
+
+#info-box {
+  background-color: #e1e9ea; /* Softer grey for a cleaner look */
+  color: #333; /* Darker text for better readability */
+  padding: 30px; /* Increased padding for a spacious layout */
+  border-radius: 15px; /* Rounded corners for a modern look */
+  width: 90%;
+  max-width: 600px; /* Slightly wider for better content display */
+  text-align: left; /* Align text to the left for better readability */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Enhanced shadow for depth */
+  font-family: 'Arial', sans-serif; /* Clean font for better aesthetics */
+  line-height: 1.6; /* Improved line spacing for readability */
+}
+
+#info-box h2 {
+  margin-top: 0;
+  font-size: 1.8rem; /* Larger font size for the title */
+  color: #222; /* Slightly darker title color */
+  text-align: center; /* Center the title */
+  margin-bottom: 20px; /* Add spacing below the title */
+}
+
+#info-box p {
+  margin-bottom: 15px; /* Add spacing between paragraphs */
+}
+
+#info-box button {
+  margin-top: 20px;
+  padding: 12px 24px;
+  background-color: #d3d3d3;
+  color: #000000;
+  border: none;
+  border-radius: 8px;
+  outline: none;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+
+  background-color: #cccccc; /* Light grey background */
+  color: #000000; /* Black text for contrast */
+  border: 1px solid #a9a9a9; /* Darker grey border for definition */
+padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+#info-box button:hover {
+  background-color: #c0c0c0;
+}
+
+@media (max-width: 768px) {
+  #info-button {
+    width: 50px; /* Reduce size for smaller screens */
+    height: 50px; /* Match width for a perfect circle */
+    font-size: 1.2rem; /* Adjust font size for better fit */
+    top: 30px; /* Move it slightly further down */
+    right: 15px; /* Adjust position to avoid overlapping */
   }
 }
 </style>
