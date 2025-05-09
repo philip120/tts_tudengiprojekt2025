@@ -277,6 +277,8 @@ export default {
 /* Styles for Background Video */
 #background-video {
   pointer-events: none; /* Disable user interaction */
+  user-select: none; /* Prevent text selection or interaction */
+  touch-action: none;
   position: fixed;
   right: 0;
   bottom: 0;
