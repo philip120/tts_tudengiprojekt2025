@@ -20,9 +20,3 @@ The TTS Podcast Generator operates in two main stages:
 ## Deployment
 <<<<<<< HEAD
 The project is live and accessible at [www.tts-ut.ee](https://www.tts-ut.ee).
-
-
-```
-=======
-The project is live and accessible at [www.tts-ut.ee](http://www.tts-ut.ee).
->>>>>>> 8e8a357a8526b763545d8cf2736fd21ebbb8e644
