@@ -92,6 +92,7 @@ app = FastAPI()
 
 # --- Add CORS Middleware --- 
 origins = [
+    "https://www.tts-ut.ee",
     "http://localhost",
     "http://localhost:8000",
     "http://127.0.0.1",

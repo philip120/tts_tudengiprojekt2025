@@ -18,7 +18,7 @@ The TTS Podcast Generator operates in two main stages:
 - **AI Models**: Gemini for script generation and XTTS-v2 for voice synthesis.
 
 ## Deployment
-The project is live and accessible at [www.tts-ut.ee](http://www.tts-ut.ee).
+The project is live and accessible at [www.tts-ut.ee](https://www.tts-ut.ee).
 
 
 ```
