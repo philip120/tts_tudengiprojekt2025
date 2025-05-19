@@ -8,7 +8,7 @@ import time # For potential delays in file processing
 API_KEY = os.getenv("GEMINI_API_KEY")
 # Fallback for testing if env var isn't set (replace or remove for production)
 if not API_KEY:
-    API_KEY = "AIzaSyAdohwIko4AxiGynoCHlbCD7biircs5ZZg" # Replace with your actual key or load from env
+    API_KEY = "" # Replace with your actual key or load from env
 
 if not API_KEY:
     raise ValueError("Gemini API key not found. Please set the GEMINI_API_KEY environment variable.")
