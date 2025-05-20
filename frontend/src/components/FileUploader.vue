@@ -12,5 +12,4 @@ export default {
 </script>
 
 <style scoped>
-/* Add any specific styles for the file uploader here */
 </style>

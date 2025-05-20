@@ -33,13 +33,11 @@ def combine_audio_segments(segment_paths: list[str], output_path: str):
             else:
                 combined_audio += segment
         except FileNotFoundError:
-             # Redundant check, but good practice
              print(f"Warning: Segment file not found (redundant check), skipping: {path}")
              continue
         except Exception as e:
-            # Catch potential errors during pydub loading/processing
             print(f"Warning: Error processing segment {path}: {e}. Skipping this segment.")
-            continue # Skip to the next segment
+            continue 
 
     if combined_audio is None:
         print("Error: No valid audio segments were loaded. Cannot save output.")
@@ -47,11 +45,9 @@ def combine_audio_segments(segment_paths: list[str], output_path: str):
 
     try:
         print(f"Exporting combined audio to: {output_path}")
-        # Ensure output directory exists
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         combined_audio.export(output_path, format="wav")
         print("Combined audio saved successfully.")
     except Exception as e:
         print(f"Error exporting combined audio to {output_path}: {e}")
-        # Consider raising the exception if saving is critical
         raise

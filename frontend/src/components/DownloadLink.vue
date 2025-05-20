@@ -18,7 +18,6 @@ export default {
 </script>
 
 <style scoped>
-/* Added specificity to ensure styles are applied to the download link */
 #downloadArea a {
   display: inline-block;
   margin-top: 0.5em;

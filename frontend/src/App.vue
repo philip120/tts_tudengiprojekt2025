@@ -48,7 +48,6 @@
         </button>
       </section>
 
-      <!-- NEW SECTION FOR HOSTS -->
       <section v-if="showHostsSection" class="hosts-section">
         <h2>Meet Your Hosts</h2>
         <div class="hosts-container">
@@ -64,7 +63,6 @@
           </div>
         </div>
       </section>
-      <!-- END NEW SECTION -->
 
       <section v-if="statusMessage" class="status-section">
         <h2>Status</h2>
@@ -111,8 +109,7 @@ export default {
       downloadLink: "",
       isProcessing: false,
       showHostsSection: false,
-      API_BASE_URL: "https://tts-tudengiprojekt2025.onrender.com", // Ensure no trailing slash
-      // Placeholder host data (assuming images are in /public/)
+      API_BASE_URL: "https://tts-tudengiprojekt2025.onrender.com",
       host1ImageUrl: "/oskar.jpg",
       host1Text: "Oskar is preparing the script...",
       host1Info: "Meet Oskar, the analytical mind behind the podcast. He focuses on dissecting complex topics from the PDF, ensuring clarity and structure in the generated script.",
@@ -170,20 +167,16 @@ export default {
       this.isProcessing = true;
       this.showHostsSection = true;
 
-      // Call adjustLogoPosition when the button is pressed
       this.adjustLogoPosition();
 
-      // Play background video
       this.$nextTick(() => {
         if (this.$refs.backgroundVideo) {
           this.$refs.backgroundVideo.play().catch(error => {
-             // Handle potential play errors (e.g., user interaction needed)
              console.error("Video play failed:", error);
           });
         }
       });
 
-      // Comment out the actual API call and polling logic for now
       const formData = new FormData();
       formData.append("file", this.selectedFile);
 
@@ -243,21 +236,18 @@ export default {
       const header = document.querySelector(".superbowl-header");
 
       if (window.innerWidth <= 768 && logo && header) {
-        // Mobile view: Move logo above the headline
         header.style.display = "block";
         header.style.alignItems = "center";
         logo.style.position = "relative";
         logo.style.margin = "0 auto 10px auto";
         header.insertBefore(logo, header.firstChild);
       } else if (this.showHostsSection && logo && header) {
-        // Desktop view with hosts section: Move logo to the left of the headline
         header.style.display = "flex";
         header.style.alignItems = "center";
         logo.style.position = "relative";
         logo.style.marginRight = "10px";
         header.insertBefore(logo, header.firstChild);
       } else if (logo && header) {
-        // Default desktop view: Keep logo fixed in the top-left corner
         header.style.display = "block";
         logo.style.position = "fixed";
         logo.style.margin = "0";
@@ -274,10 +264,9 @@ export default {
 @import "./style.css";
 @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;700&display=swap');
 
-/* Styles for Background Video */
 #background-video {
-  pointer-events: none; /* Disable user interaction */
-  user-select: none; /* Prevent text selection or interaction */
+  pointer-events: none; 
+  user-select: none; 
   touch-action: none;
   position: fixed;
   right: 0;
@@ -286,25 +275,21 @@ export default {
   min-height: 100%;
   width: auto;
   height: auto;
-  z-index: -100; /* Place it behind everything */
-  object-fit: cover; /* Cover the entire area */
-  opacity: 0; /* Start hidden */
-  transition: opacity 0.5s ease-in-out; /* Add transition */
-  /* Optional: Add a dark overlay for better text contrast */
-  /* filter: brightness(0.5); */ 
+  z-index: -100; 
+  object-fit: cover; 
+  opacity: 0; 
+  transition: opacity 0.5s ease-in-out; 
 }
 
-/* Class to make the video visible */
 #background-video.video-visible {
   opacity: 1;
 }
 
-/* Ensure app container allows z-index context and has initial background */
 #app {
-  position: relative; /* Needed for z-index */
-  z-index: 1; /* Keep content above background */
-  background-color: #1a1a1a; /* Initial dark background */
-  min-height: 100vh; /* Ensure it covers viewport height */
+  position: relative; 
+  z-index: 1; 
+  background-color: #1a1a1a; 
+  min-height: 100vh; 
   font-family: 'Montserrat', sans-serif;
 }
 
@@ -366,11 +351,10 @@ export default {
   font-size: 1rem;
 }
 
-/* Updated the generate-button color to light grey */
 .generate-button {
-  background-color: #d3d3d3; /* Light grey background */
-  color: #000000; /* Black text for contrast */
-  border: 1px solid #a9a9a9; /* Darker grey border for definition */
+  background-color: #d3d3d3; 
+  color: #000000; 
+  border: 1px solid #a9a9a9; 
   padding: 12px 24px;
   border-radius: 8px;
   cursor: pointer;
@@ -381,7 +365,7 @@ export default {
 }
 
 .generate-button:hover {
-  background-color: #c0c0c0; /* Slightly darker grey for hover effect */
+  background-color: #c0c0c0;
   transform: scale(1.05);
   outline: none;
   box-shadow: none;
@@ -396,7 +380,6 @@ export default {
   font-size: 0.9rem;
 }
 
-/* NEW HOST DISPLAY STYLES */
 .hosts-section {
   background-color: rgba(42, 42, 42, 0.8);
   padding: 20px;
@@ -413,25 +396,24 @@ export default {
 
 .hosts-container {
   display: flex;
-  justify-content: space-around; /* Adjust as needed */
-  align-items: flex-start; /* Align items at the top */
-  gap: 20px; /* Space between columns */
+  justify-content: space-around; 
+  align-items: flex-start; 
+  gap: 20px; 
 }
 
 .host-column {
-  flex: 1; /* Each column takes equal space */
+  flex: 1; 
   display: flex;
   flex-direction: column;
   align-items: center;
   color: #cccccc;
 }
 
-/* Adjusted size for profile pictures */
 .host-column img {
-  width: 150px; /* Increased size */
+  width: 150px; 
   height: 150px;
-  border-radius: 50%; /* Make images circular */
-  object-fit: cover; /* Ensure image covers the area */
+  border-radius: 50%; 
+  object-fit: cover; 
   margin-bottom: 10px;
   border: 2px solid #444444;
 }
@@ -448,15 +430,15 @@ export default {
 }
 
 #top-left-logo {
-    position: fixed; /* Ensures it stays in the top-left corner even when scrolling */
+    position: fixed; 
     top: 0;
     left: 0;
-    width: 200px; /* Adjusted size for better visibility */
+    width: 200px;
     height: auto;
-    z-index: 1000; /* Ensures it stays above other elements */
-    margin: 0; /* Removes any default margin */
-    padding: 0; /* Removes any default padding */
-    margin-right: 6px; /* Decreased space between logo and h1 when sideways */
+    z-index: 1000; 
+    margin: 0; 
+    padding: 0; 
+    margin-right: 6px; 
 }
 
 @media (max-width: 768px) {
@@ -492,7 +474,7 @@ export default {
 
   #top-left-logo {
     width: 150px;
-    margin: 0 auto 10px auto; /* Keep margin for stacked (mobile) view */
+    margin: 0 auto 10px auto; 
   }
 }
 
@@ -547,27 +529,27 @@ export default {
 
 #info-button {
   position: fixed;
-  top: 20px; /* Keep it further down */
-  right: 10px; /* Ensure consistent distance from the right side */
+  top: 20px; 
+  right: 10px; 
   background-color: #d3d3d3;
   color: #000000;
   border: 1px solid #a9a9a9;
-  border-radius: 50%; /* Make it circular */
-  width: 70px; /* Increase size for a bigger button */
-  height: 70px; /* Match width for a perfect circle */
-  font-size: 1.5rem; /* Increase font size for better visibility */
+  border-radius: 50%; 
+  width: 70px; 
+  height: 70px; 
+  font-size: 1.5rem; 
   cursor: pointer;
   z-index: 1100;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 10px; /* Add consistent margin */
+  margin: 10px; 
   transition: background-color 0.3s, transform 0.2s;
   outline: none;
 }
 
 #info-button:hover {
-  background-color: #c0c0c0; /* Slightly darker grey for hover effect */
+  background-color: #c0c0c0; 
   transform: scale(1.05);
   outline: none;
   box-shadow: none;
@@ -592,28 +574,28 @@ export default {
 }
 
 #info-box {
-  background-color: #e1e9ea; /* Softer grey for a cleaner look */
-  color: #333; /* Darker text for better readability */
-  padding: 30px; /* Increased padding for a spacious layout */
-  border-radius: 15px; /* Rounded corners for a modern look */
+  background-color: #e1e9ea; 
+  color: #333; 
+  padding: 30px; 
+  border-radius: 15px;
   width: 90%;
-  max-width: 600px; /* Slightly wider for better content display */
-  text-align: left; /* Align text to the left for better readability */
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Enhanced shadow for depth */
-  font-family: 'Arial', sans-serif; /* Clean font for better aesthetics */
-  line-height: 1.6; /* Improved line spacing for readability */
+  max-width: 600px; 
+  text-align: left; 
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); 
+  font-family: 'Arial', sans-serif; 
+  line-height: 1.6; 
 }
 
 #info-box h2 {
   margin-top: 0;
-  font-size: 1.8rem; /* Larger font size for the title */
-  color: #222; /* Slightly darker title color */
-  text-align: center; /* Center the title */
-  margin-bottom: 20px; /* Add spacing below the title */
+  font-size: 1.8rem; 
+  color: #222; 
+  text-align: center; 
+  margin-bottom: 20px; 
 }
 
 #info-box p {
-  margin-bottom: 15px; /* Add spacing between paragraphs */
+  margin-bottom: 15px; 
 }
 
 #info-box button {
@@ -627,9 +609,9 @@ export default {
   cursor: pointer;
   transition: background-color 0.3s, transform 0.2s;
 
-  background-color: #cccccc; /* Light grey background */
-  color: #000000; /* Black text for contrast */
-  border: 1px solid #a9a9a9; /* Darker grey border for definition */
+  background-color: #cccccc; 
+  color: #000000; 
+  border: 1px solid #a9a9a9; 
 padding: 12px 24px;
   border-radius: 8px;
   cursor: pointer;
@@ -644,11 +626,11 @@ padding: 12px 24px;
 
 @media (max-width: 768px) {
   #info-button {
-    width: 50px; /* Reduce size for smaller screens */
-    height: 50px; /* Match width for a perfect circle */
-    font-size: 1.2rem; /* Adjust font size for better fit */
-    top: 30px; /* Move it slightly further down */
-    right: 15px; /* Adjust position to avoid overlapping */
+    width: 50px; 
+    height: 50px; 
+    font-size: 1.2rem; 
+    top: 30px; 
+    right: 15px; 
   }
 }
 </style>

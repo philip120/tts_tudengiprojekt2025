@@ -70,7 +70,6 @@
         const statusArea = document.getElementById('statusArea');
         const downloadArea = document.getElementById('downloadArea');
 
-        // Backend API URL (Point to deployed Render service)
         const API_BASE_URL = 'https://tts-tudengiprojekt2025.onrender.com';
         //const API_BASE_URL = 'http://127.0.0.1:8000';
         let currentJobId = null;
@@ -79,7 +78,6 @@
         generateButton.addEventListener('click', async () => {
             const file = pdfFileInput.files[0];
 
-            // --- Basic Validation ---
             if (!file) {
                 updateStatus('Please select a PDF file first.', true);
                 return;
@@ -88,26 +86,22 @@
                 updateStatus('Invalid file type. Please select a PDF.', true);
                 return;
             }
-            // -----------------------
 
-            // Reset UI
             updateStatus('Uploading PDF and starting job...');
             downloadArea.innerHTML = '<p>Download link will appear here when ready.</p>';
-            generateButton.disabled = true; // Disable button during processing
+            generateButton.disabled = true; 
             if (pollIntervalId) clearInterval(pollIntervalId);
 
             const formData = new FormData();
             formData.append('file', file);
 
             try {
-                // --- Submit Job --- 
                 const response = await fetch(`${API_BASE_URL}/generate-podcast-async/`, {
                     method: 'POST',
                     body: formData,
                 });
 
                 if (!response.ok) {
-                    // Try to get error detail from backend response
                     let errorDetail = `HTTP error! Status: ${response.status}`;
                     try {
                         const errorData = await response.json();
@@ -120,18 +114,15 @@
                 currentJobId = data.job_id;
                 updateStatus(`Job started successfully! Job ID: ${currentJobId}. Checking status...`);
                 
-                // --- Start Polling ---
                 pollStatus(currentJobId);
-                // -------------------
 
             } catch (error) {
                 console.error('Error submitting job:', error);
                 updateStatus(`Error submitting job: ${error.message}`, true);
-                generateButton.disabled = false; // Re-enable button on error
+                generateButton.disabled = false; 
             }
         });
 
-        // --- Polling Function ---
         async function pollStatus(jobId) {
             if (!jobId) return;
 
@@ -139,7 +130,6 @@
                 const response = await fetch(`${API_BASE_URL}/job-status/${jobId}`);
 
                 if (!response.ok) {
-                     // Stop polling on server error during status check
                      clearInterval(pollIntervalId);
                      pollIntervalId = null;
                      throw new Error(`HTTP error checking status! Status: ${response.status}`);
@@ -147,41 +137,35 @@
 
                 const data = await response.json();
 
-                updateStatus(data.message || `Status: ${data.status}`); // Show backend message
+                updateStatus(data.message || `Status: ${data.status}`); 
 
                 if (data.status === 'COMPLETED') {
                     clearInterval(pollIntervalId);
                     pollIntervalId = null;
                     updateStatus('Podcast generation complete!', false, true);
                     displayDownloadLink(jobId);
-                    generateButton.disabled = false; // Re-enable button
+                    generateButton.disabled = false; 
                 } else if (data.status === 'FAILED') {
                     clearInterval(pollIntervalId);
                     pollIntervalId = null;
                     updateStatus(`Job failed: ${data.error || 'Unknown error'}`, true);
-                    generateButton.disabled = false; // Re-enable button
+                    generateButton.disabled = false; 
                 } else {
-                    // --- Continue Polling ---
-                    // Clear previous timer just in case
                     if (pollIntervalId) clearInterval(pollIntervalId);
-                    // Set a new timer
-                    pollIntervalId = setTimeout(() => pollStatus(jobId), 5000); // Poll every 5 seconds
-                    // -------------------------
+                    pollIntervalId = setTimeout(() => pollStatus(jobId), 5000); 
                 }
 
             } catch (error) {
                 console.error('Error polling status:', error);
                 updateStatus(`Error checking job status: ${error.message}`, true);
-                // Consider stopping polling on repeated errors
                 if (pollIntervalId) clearInterval(pollIntervalId);
                 pollIntervalId = null;
-                generateButton.disabled = false; // Re-enable button
+                generateButton.disabled = false; 
             }
         }
 
-        // --- Helper: Update Status Area ---
         function updateStatus(message, isError = false, isSuccess = false) {
-            statusArea.innerHTML = ''; // Clear previous
+            statusArea.innerHTML = ''; 
             const p = document.createElement('p');
             p.textContent = message;
             if (isError) p.classList.add('error');
@@ -189,14 +173,12 @@
             statusArea.appendChild(p);
         }
 
-        // --- Helper: Display Download Link ---
         function displayDownloadLink(jobId) {
-            downloadArea.innerHTML = ''; // Clear previous
+            downloadArea.innerHTML = ''; 
             const link = document.createElement('a');
             link.href = `${API_BASE_URL}/download-result/${jobId}`;
             link.textContent = 'Download Podcast (.wav)';
-            link.target = '_blank'; // Optional: open in new tab
-            // link.download = 'podcast.wav'; // Optional: Suggest a filename (might not always work)
+            link.target = '_blank'; 
             downloadArea.appendChild(link);
         }
 

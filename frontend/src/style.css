@@ -13,21 +13,18 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Updated styles for better separation and consistent grey-white-black theme */
 
-/* Reset some default styles */
 body, h1, h2, h3, p, ul, ol, li, a {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-/* Base styles */
 body {
   font-family: Arial, sans-serif;
   line-height: 1.6;
-  background-color: #1a1a1a; /* Darker background */
-  color: #e0e0e0; /* Lighter text for contrast */
+  background-color: #1a1a1a;
+  color: #e0e0e0; 
   margin: 0;
   padding: 0;
 }
@@ -38,18 +35,17 @@ body {
   padding: 20px;
 }
 
-/* Updated styles for header and buttons */
 
 header {
-  background-color: #1f1f1f; /* Darker header background */
+  background-color: #1f1f1f; 
   padding: 30px;
   text-align: center;
-  border-bottom: 2px solid #333333; /* Subtle border */
+  border-bottom: 2px solid #333333; 
   margin-bottom: 20px;
 }
 
 header h1 {
-  color: #ffffff; /* White text */
+  color: #ffffff; 
   font-size: 2.8rem;
   font-weight: bold;
   text-transform: uppercase;
@@ -58,8 +54,8 @@ header h1 {
 }
 
 section {
-  background-color: #2a2a2a; /* Dark grey section background */
-  color: #e0e0e0; /* Light text */
+  background-color: #2a2a2a; 
+  color: #e0e0e0; 
   padding: 20px;
   border-radius: 10px;
   margin-bottom: 20px;
@@ -69,7 +65,7 @@ section {
 section h2 {
   font-size: 1.8rem;
   margin-bottom: 10px;
-  color: #ffffff; /* White text */
+  color: #ffffff; 
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -77,13 +73,13 @@ section h2 {
 section p {
   font-size: 1rem;
   margin-bottom: 15px;
-  color: #cccccc; /* Light grey text */
+  color: #cccccc; 
 }
 
 button {
-  background-color: #333333; /* Darker button background */
-  color: #000000; /* White text */
-  border: 1px solid #444444; /* Subtle border */
+  background-color: #333333; 
+  color: #000000; 
+  border: 1px solid #444444; 
   padding: 12px 24px;
   border-radius: 8px;
   cursor: pointer;
@@ -93,14 +89,14 @@ button {
 }
 
 button:hover {
-  background-color: #444444; /* Slightly lighter on hover */
-  transform: scale(1.05); /* Subtle zoom effect */
+  background-color: #444444; 
+  transform: scale(1.05); 
 }
 
 input[type="file"] {
-  background-color: #333333; /* Match button styling */
-  color: #ffffff; /* White text */
-  border: 1px solid #444444; /* Subtle border */
+  background-color: #333333; 
+  color: #ffffff; 
+  border: 1px solid #444444; 
   padding: 10px;
   border-radius: 8px;
   cursor: pointer;
@@ -109,17 +105,17 @@ input[type="file"] {
 }
 
 input[type="file"]:hover {
-  background-color: #444444; /* Slightly lighter on hover */
-  transform: scale(1.05); /* Subtle zoom effect */
+  background-color: #444444; 
+  transform: scale(1.05);
 }
 
 footer {
-  background-color: #1f1f1f; /* Darker footer background */
+  background-color: #1f1f1f; 
   padding: 20px;
   text-align: center;
-  color: #cccccc; /* Light grey text */
+  color: #cccccc; 
   margin-top: 20px;
-  border-top: 2px solid #333333; /* Subtle border */
+  border-top: 2px solid #333333; 
 }
 
 footer p {
@@ -136,7 +132,6 @@ a:hover {
   color: #c0c0c0; 
 }
 
-/* Add subtle animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -151,9 +146,9 @@ body {
 }
 
 a {
-  background-color: #d3d3d3; /* Light grey background */
-  color: #000000; /* Black text for contrast */
-  border: 1px solid #a9a9a9; /* Darker grey border for definition */
+  background-color: #d3d3d3; 
+  color: #000000; 
+  border: 1px solid #a9a9a9; 
   padding: 12px 24px;
   border-radius: 8px;
   cursor: pointer;
@@ -228,16 +223,16 @@ button:focus-visible {
 
 
   #top-left-logo {
-    width: 120px; /* Adjust size for smaller screens */
+    width: 120px; 
     height: auto;
-    margin: 10px; /* Add some spacing */
+    margin: 10px; 
   }
 
   .superbowl-header {
-    font-size: 1.2rem; /* Further reduce font size for smaller screens */
-    padding: 10px; /* Reduce padding */
-    text-align: center; /* Ensure proper alignment */
-    line-height: 1.4; /* Adjust line height for better readability */
+    font-size: 1.2rem; 
+    padding: 10px; 
+    text-align: center; 
+    line-height: 1.4; 
   }
 
   .upload-section, .hosts-section, .status-section, .result-section {
@@ -267,7 +262,7 @@ button:focus-visible {
   }
 
   .superbowl-header h1 {
-    font-size: 1.5em; /* Reduce font size for smaller screens */
-    line-height: 1.3; /* Adjust line height for better readability */
+    font-size: 1.5em; 
+    line-height: 1.3; 
   }
 }
