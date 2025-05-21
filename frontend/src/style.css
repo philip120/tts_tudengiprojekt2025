@@ -206,6 +206,17 @@ button:focus-visible {
   text-align: center;
 }
 
+#info-box a {
+  all: unset;
+  color: #1e90ff;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+#info-box a:hover {
+  color: #104e8b;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
