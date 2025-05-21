@@ -12,6 +12,7 @@
         <h2>About This Project</h2>
         <p>This project was developed by Philip Paškov and Oskar Männik for the University of Tartu Student Project Contest 2025. Its primary goal is to offer students a new way of learning by allowing them to upload their lecture slides (PDF format) and convert them into podcasts for a more enjoyable studying process.</p>
         <p>The system operates in two main stages: first, a textual script is generated from the slides using Gemini. Then, leveraging the XTTS-v2 model, we apply voice cloning to produce a podcast narrated in our own voices.</p>
+        <p>Check out our project on <a href="https://github.com/philip120/tts_tudengiprojekt2025" target="_blank">GitHub</a>.</p>
         <button @click="toggleInfoBox">Close</button>
       </div>
     </div>
