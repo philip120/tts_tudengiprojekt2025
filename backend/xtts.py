@@ -8,11 +8,9 @@ BASE_PATH = "model/XTTS-v2"
 REFERENCE_WAV = "wavs/phone2.wav"
 OUTPUT_PATH = "output_test/phone.wav"
 
-# Load config
 config = XttsConfig()
 config.load_json(os.path.join(BASE_PATH, "config.json"))
 
-# Force override audio settings
 config.audio = {
     "sample_rate": 24000,
     "output_sample_rate": 24000,
@@ -26,10 +24,8 @@ config.audio = {
 config.model_args.num_mel_positions = 608
 config.model_args.num_text_positions = 404
 
-# Init model
 model = Xtts.init_from_config(config)
 
-# Use safe_globals context manager to allow loading XttsConfig
 with safe_globals([XttsConfig]):
     model.load_checkpoint(
         config,
@@ -39,9 +35,7 @@ with safe_globals([XttsConfig]):
         use_deepspeed=False
     )
 
-# model.cuda() # Commented out to force CPU usage due to low VRAM
 
-# Inference
 output = model.synthesize(
     text="Exactly. Our document today dives into that, questioning if anarchism's inherent decentralization prevents it from effectively running larger structures.",
     config=config,
@@ -49,7 +43,6 @@ output = model.synthesize(
     language="en"
 )
 
-# Save to wav
 ap = AudioProcessor.init_from_config(config)
 ap.save_wav(output["wav"], OUTPUT_PATH)
 

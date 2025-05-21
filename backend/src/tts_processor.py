@@ -1,43 +1,30 @@
-# src/tts_processor.py
 
 import json
 import os
 import sys
-import re # For sentence splitting
-from typing import Union # Import Union for older Python compatibility
+import re 
+from typing import Union 
 
-# Import the TTS Engine
 from src.tts_engine import TTSEngine 
-# Import the Audio Combiner
 from src.audio_combiner import combine_audio_segments
 
-# --- Configuration ---
-# Estimate max characters based on the TTS library warning.
-# Needs testing with the actual TTS model, but 250 seems to be the hard limit.
-MAX_CHARS_PER_TTS_CHUNK = 240 # Reduced from 750 to be below the library's 250 limit
-DEFAULT_TEMP_AUDIO_DIR = "temp_audio/"
-# Define model path for TTS Engine initialization
-# This path should be relative to the project root where main.py is typically run
-DEFAULT_TTS_MODEL_PATH = "model/XTTS-v2" # Changed back from ../model/XTTS-v2
 
-# --- Hardcoded Paths ---
-# Define paths relative to the project root (parent of src)
+DEFAULT_TEMP_AUDIO_DIR = "temp_audio/"
+
+DEFAULT_TTS_MODEL_PATH = "model/XTTS-v2" 
+
+
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SPEAKER_A_REF_PATH = os.path.join(PROJECT_ROOT, "backend/reference/philip.wav") # Adjust if your default name is different
-SPEAKER_B_REF_PATH = os.path.join(PROJECT_ROOT, "backend/reference/oskar.wav") # Adjust if your default name is different
-# Renamed: This is the output for the main content, before adding intro
+SPEAKER_A_REF_PATH = os.path.join(PROJECT_ROOT, "backend/reference/philip.wav")
+SPEAKER_B_REF_PATH = os.path.join(PROJECT_ROOT, "backend/reference/oskar.wav") 
+
 MAIN_CONTENT_OUTPUT_PATH = os.path.join(PROJECT_ROOT, "backend/output/final_podcast_content.wav") 
 
-# --- Helper: Sentence Splitter ---
-# Basic sentence splitting based on common punctuation.
-# More sophisticated libraries like nltk or spacy could be used for better accuracy.
+
 def split_into_sentences(text):
-    # Use regex to split by '.', '!', '?' followed by space or end of string
     sentences = re.split(r'(?<=[.!?])\s+', text)
-    # Filter out any empty strings that might result from splitting
     return [s.strip() for s in sentences if s.strip()]
 
-# --- Helper: Chunk Text ---
 def chunk_text(text, max_chars):
     """Splits text into chunks under max_chars, trying to respect sentence boundaries."""
     chunks = []
@@ -45,50 +32,39 @@ def chunk_text(text, max_chars):
     sentences = split_into_sentences(text)
 
     if not sentences:
-        # Handle case where the input text has no sentences or splitting failed
         if len(text) <= max_chars:
              if text.strip(): # Avoid adding empty chunks
                 return [text.strip()]
         else:
-            # Force split if it's too long and has no sentences
-            # This might cut words, which is bad for TTS, but it's a fallback.
             print(f"Warning: Force-splitting long text without sentence breaks: '{text[:50]}...'")
             for i in range(0, len(text), max_chars):
                 chunks.append(text[i:i+max_chars].strip())
             return chunks
 
     for sentence in sentences:
-        # Check if adding the next sentence exceeds the limit
-        if current_chunk and len(current_chunk) + len(sentence) + 1 > max_chars: # +1 for space
-            # Finish the current chunk
+        if current_chunk and len(current_chunk) + len(sentence) + 1 > max_chars: 
             chunks.append(current_chunk.strip())
             current_chunk = sentence
         elif len(sentence) > max_chars:
-             # If a single sentence is already too long, handle it.
-             # First, add the previous chunk if it exists
+            
              if current_chunk:
                  chunks.append(current_chunk.strip())
                  current_chunk = ""
-             # Split the long sentence itself (this is suboptimal, might cut mid-word)
              print(f"Warning: Splitting a single sentence longer than {max_chars} chars: '{sentence[:50]}...'")
              for i in range(0, len(sentence), max_chars):
                  chunks.append(sentence[i:i+max_chars].strip())
         else:
-            # Add sentence to the current chunk
             if current_chunk:
                 current_chunk += " " + sentence
             else:
                 current_chunk = sentence
 
-    # Add the last remaining chunk
     if current_chunk:
         chunks.append(current_chunk.strip())
 
-    # Filter out any potential empty chunks again after processing
     return [c for c in chunks if c]
 
 
-# --- Main Processing Function ---
 def process_script_for_tts(script_path: str) -> Union[str, None]:
     """
     Loads a JSON script, processes it segment by segment for TTS (handling chunking),
@@ -110,7 +86,6 @@ def process_script_for_tts(script_path: str) -> Union[str, None]:
     print(f"Using Speaker B Ref: {SPEAKER_B_REF_PATH}")
     print(f"Outputting Main Content to: {MAIN_CONTENT_OUTPUT_PATH}")
 
-    # --- Validate Hardcoded Input Files ---
     if not os.path.exists(SPEAKER_A_REF_PATH): print(f"Error: Speaker A ref not found: {SPEAKER_A_REF_PATH}"); return None
     if not os.path.exists(SPEAKER_B_REF_PATH): print(f"Error: Speaker B ref not found: {SPEAKER_B_REF_PATH}"); return None
 
@@ -122,7 +97,6 @@ def process_script_for_tts(script_path: str) -> Union[str, None]:
 
     if not isinstance(structured_script, list): print(f"Error: Script file {script_path} invalid structure."); return None
 
-    # --- Prepare for TTS --- 
     base_output_dir = os.path.dirname(MAIN_CONTENT_OUTPUT_PATH)
     temp_audio_dir = os.path.join(base_output_dir, os.path.basename(DEFAULT_TEMP_AUDIO_DIR))
     os.makedirs(temp_audio_dir, exist_ok=True)
@@ -131,14 +105,12 @@ def process_script_for_tts(script_path: str) -> Union[str, None]:
     all_segment_paths = []
     segment_counter = 0
 
-    # --- Initialize TTS Engine --- 
     print("\nInitializing TTS Engine...")
     try:
         tts_engine = TTSEngine(model_path=DEFAULT_TTS_MODEL_PATH)
         if not tts_engine.model: print("Error: TTSEngine init failed."); return None
     except Exception as e: print(f"Fatal error initializing TTSEngine: {e}"); return None
 
-    # --- Process Each Segment --- 
     print("\nProcessing script segments for TTS...")
     for i, segment in enumerate(structured_script):
         speaker = segment.get('speaker')
@@ -169,23 +141,21 @@ def process_script_for_tts(script_path: str) -> Union[str, None]:
                 all_segment_paths.append(chunk_output_path)
             except Exception as e:
                 print(f"    Error synthesizing chunk {j+1} for segment {i+1}: {e}")
-                pass # Continue for now, but don't add path
+                pass 
             
             segment_counter += 1
 
-    # --- Combine Audio Segments --- 
     if not all_segment_paths:
         print("\nError: No audio segments were generated successfully. Cannot combine.")
-        return None # Return None on failure
+        return None 
 
     print(f"\nCombining {len(all_segment_paths)} audio chunks into main content output... -> {MAIN_CONTENT_OUTPUT_PATH}")
     try:
         combine_audio_segments(all_segment_paths, MAIN_CONTENT_OUTPUT_PATH)
     except Exception as e:
         print(f"Fatal error combining audio segments: {e}"); 
-        return None # Return None on failure
+        return None 
 
-    # --- Cleanup --- 
     print(f"Attempting cleanup in: {temp_audio_dir}")
     cleanup_count = 0
     error_count = 0
@@ -206,4 +176,4 @@ def process_script_for_tts(script_path: str) -> Union[str, None]:
         print(f"Warning: Could not remove temporary directory {temp_audio_dir}: {e}")
 
     print("\n--- Main Content TTS Processing and Combination Finished --- ")
-    return MAIN_CONTENT_OUTPUT_PATH # Return the path of the generated content
+    return MAIN_CONTENT_OUTPUT_PATH 

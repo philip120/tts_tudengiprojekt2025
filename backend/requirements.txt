@@ -2,10 +2,9 @@ TTS
 torch
 pydub
 google-generativeai
-# reportlab # Optional: needed for the test block in script_generator.py to create a dummy PDF 
 fastapi
 uvicorn[standard]
 python-multipart
 requests
-gunicorn # Added for production server
-redis # Added for shared job status store 
+gunicorn 
+redis 
