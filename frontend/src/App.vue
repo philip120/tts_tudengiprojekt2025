@@ -113,10 +113,10 @@ export default {
       API_BASE_URL: "https://tts-tudengiprojekt2025.onrender.com",
       host1ImageUrl: "/oskar.jpg",
       host1Text: "Oskar is preparing the script...",
-      host1Info: "Meet Oskar, the analytical mind behind the podcast. He focuses on dissecting complex topics from the PDF, ensuring clarity and structure in the generated script.",
+      host1Info: "Oskar is the analytical mind behind the podcast. As a second-year computer science student, he breaks down complex topics into clear, organized scripts, ensuring everything is easy to understand.",
       host2ImageUrl: "/philip2.jpg",
       host2Text: "Philip is warming up his voice...",
-      host2Info: "And here's Philip, the voice of the podcast. He brings the generated script to life with engaging delivery and clear narration, making complex ideas accessible.",
+      host2Info: "Philip is the voice of the podcast. Also a second-year computer science student, he takes generated scripts and brings them to life with engaging narration, making complex ideas accessible and enjoyable.",
       showInfoBox: false,
     };
   },
